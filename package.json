@@ -1,0 +1,33 @@
+{
+  "name": "wallet-permission-scanner",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=24.16.0 <25"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @wps/contracts build && pnpm --parallel --filter @wps/web --filter @wps/api dev",
+    "build": "pnpm -r build",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter @wps/contracts build && pnpm -r typecheck",
+    "test": "pnpm --filter @wps/contracts build && pnpm -r --if-present test",
+    "test:production": "node scripts/production-smoke.mjs",
+    "compose:check": "docker compose -f infra/compose.yaml config --quiet",
+    "compose:up": "docker compose -f infra/compose.yaml up --build --wait --wait-timeout 180",
+    "compose:down": "docker compose -f infra/compose.yaml down"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "24.19.2",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.14.0",
+    "prettier": "3.10.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0"
+  }
+}

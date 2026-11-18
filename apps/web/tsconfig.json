@@ -1,0 +1,14 @@
+{
+  "extends": "@wps/typescript-config/next.json",
+  "compilerOptions": { "types": ["node", "react", "react-dom"] },
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/**/*.ts",
+    "next.config.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

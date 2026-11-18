@@ -1,0 +1,14 @@
+.agents/
+.codex/
+# Existing specifications and owner references keep their supplied formatting.
+docs/
+AGENTS.md
+skills.md
+node_modules/
+**/.next/
+**/dist/
+**/dist-test/
+**/coverage/
+pnpm-lock.yaml
+**/next-env.d.ts
+*.tsbuildinfo

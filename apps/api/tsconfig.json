@@ -1,0 +1,11 @@
+{
+  "extends": "@wps/typescript-config/node.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts"]
+}

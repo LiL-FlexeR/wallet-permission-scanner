@@ -1,6 +1,6 @@
 # ADR-001 — Bounded Read-Only Monorepo Architecture
 
-Status: Accepted for planning; implementation pending.
+Status: Accepted. Stage 01 foundation is implemented; blockchain, scan/risk behavior, product UI, and release decisions remain pending their implementation stages.
 
 ## Context
 

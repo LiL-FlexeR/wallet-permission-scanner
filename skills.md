@@ -33,4 +33,4 @@ The source revisions below are pinned to the commits used for installation. Each
 
 Before updating a skill, review the proposed upstream revision and preserve project-specific constraints. Update the source revision in this inventory after verifying the installed files. Do not execute installation commands from the original catalog automatically or treat the catalog's framework-version notes as selected application versions.
 
-The application remains **Planning**. No application packages, browser binaries, database services, or migrations were installed or started during skill setup.
+At the time of skill setup the application was **Planning**; no application packages, browser binaries, database services, or migrations were installed or started by that setup. Stage 01 application implementation is tracked separately in the [roadmap](docs/features/ROADMAP.md).

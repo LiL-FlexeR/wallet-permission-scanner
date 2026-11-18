@@ -2,7 +2,7 @@
 
 ## Current and proposed structure
 
-The planning repository contains the README, root [AGENTS.md](../../AGENTS.md), [skills inventory](../../skills.md), documentation, local Codex skills, and the owner's [design reference pack](../design/DESIGN.md). Application paths below are proposed implementation outputs. Create them incrementally in their owning stage; do not pre-create empty infrastructure or source scaffolding during documentation work.
+The repository contains the README, root [AGENTS.md](../../AGENTS.md), [skills inventory](../../skills.md), documentation, local Codex skills, and the owner's [design reference pack](../design/DESIGN.md). Stage 01 adds the web/API shells, shared contracts and TypeScript configuration, foundation tests, workspace tooling, `scripts/production-smoke.mjs`, and local Compose/build helpers. The tree below also specifies future stage outputs: scanner, blockchain, registry, risk, shared scan fixtures/E2E, production Dockerfiles, and CI are not implemented. Create those incrementally in their owning stages.
 
 ```text
 apps/
@@ -96,6 +96,8 @@ There is no baseline `prisma/` directory, Prisma dependency, PostgreSQL containe
 
 ## Infrastructure
 
-Root package scripts added in Stage 01 must cover actual development, lint, format checking, type checking, tests, and builds. Document only scripts that exist and have been verified. Compose should run the two applications; Stage 06 defines production containers and CI. No Redis, worker process, service mesh, or Kubernetes tree is needed.
+Root package scripts added in Stage 01 cover development, lint, format checking, type checking, tests, builds, production-artifact smoke verification, and local Compose. The local multi-stage helper is `infra/docker/development.Dockerfile`; it runs built applications as the non-root Node user. Compose runs only web/API with readiness-based ordering and loopback ports. Stage 06 defines production release containers and CI. No Redis, worker process, service mesh, or Kubernetes tree is needed.
+
+The runtime proxy target is checked in Next's phase-aware startup configuration before listening; instrumentation additionally initializes server-only configuration. This accounts for lazy instrumentation loading in the installed Next.js version. Build-time configuration does not capture a target. The proxy enforces a 1 KiB input limit, 1 MiB response limit, 25-second total budget, no redirects or retries, cancellation, and a narrow response-header allowlist. Transport failures use a sanitized `503 SERVICE_NOT_READY`; scan-domain errors remain Stage 03.
 
 See [Stage 01](../features/stages/01-project-foundation.md) for initialization and [Stage 06](../features/stages/06-deployment-and-release.md) for release packaging.

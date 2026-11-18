@@ -4,7 +4,7 @@
 
 Wallet Permission Scanner is a two-application TypeScript monorepo: a Next.js App Router frontend and a NestJS REST backend. Only the backend talks to Ethereum. The MVP checks a versioned list of supported token/spender pairs, on chain ID `1`, and returns current state at a named finalized block. It has no authentication, signing, transaction execution, or database dependency.
 
-The [architecture decision](decisions/ADR-001-architecture.md) explains the trade-offs. The [project structure](project-structure.md) defines module ownership. All features remain planned; this document is a specification for later implementation.
+The [architecture decision](decisions/ADR-001-architecture.md) explains the trade-offs. The [project structure](project-structure.md) defines module ownership. Stage 01 implements only workspace/application shells, validated configuration, the API HTTP baseline and health checks, same-origin proxy plumbing, and local containers. The scan flow and domain features below remain specifications for later stages.
 
 ```mermaid
 flowchart TB

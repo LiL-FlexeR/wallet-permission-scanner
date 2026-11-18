@@ -1,10 +1,10 @@
 # Implementation Roadmap
 
-Status: **Planning**. Documentation is complete when verified; application implementation has not begun. All implementation checkboxes remain unchecked. Execute the stages in order and review each stage's acceptance criteria before proceeding.
+Status: **Stage 01 complete** (2026-11-18). The foundation is implemented and verified; Stages 02–06 have not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
 
 ## Overall progress
 
-- [ ] Stage 01 — Project Foundation
+- [x] Stage 01 — Project Foundation
 - [ ] Stage 02 — Blockchain Integration
 - [ ] Stage 03 — Backend API and Risk Analysis
 - [ ] Stage 04 — Frontend Integration
@@ -15,7 +15,7 @@ Dependency chain: **01 → 02 → 03 → 04 → 05 → 06**. The owner has suppl
 
 ## Stage 01 — Project Foundation
 
-- **Progress:** [ ] Not started.
+- **Progress:** [x] Complete — 2026-11-18. Workspace checks, 35 deterministic tests, production builds/smoke, development startup, and local Compose health/routing passed. Verification details are recorded in the stage specification.
 - **Objective:** Establish a runnable, reproducible workspace without implementing scan features.
 - **Scope summary:** pnpm monorepo; Next.js and NestJS shells; shared TypeScript/contracts; lint/format; environment validation; same-origin API proxy; local web/API Compose; health checks. Explicitly defer a database.
 - **Main deliverables:** Pinned toolchain and lockfile, real package scripts, safe environment examples, application shells, health routes, local container setup, verified README commands.
