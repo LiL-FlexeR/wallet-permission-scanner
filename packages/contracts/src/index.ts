@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export { normalizeAddress, ethereumAddressSchema } from './address.js';
+export type { EthereumAddress } from './address.js';
+
 export const scanModeSchema = z.enum(['live', 'demo']);
 export const livenessSchema = z.strictObject({ status: z.literal('ok') });
 export const readinessSchema = z.strictObject({

@@ -8,7 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node --env-file-if-exists=.env dist/main.js",
     "typecheck": "tsc -p tsconfig.test.json --noEmit",
-    "test": "tsc -p tsconfig.test.json && node --test dist-test/test/*.test.js"
+    "test": "tsc -p tsconfig.test.json && node --test dist-test/test/*.test.js",
+    "test:blockchain:live": "node --env-file-if-exists=.env dist/blockchain/live-smoke.js"
   },
   "dependencies": {
     "@nestjs/common": "12.5.1",
@@ -19,6 +20,7 @@
     "express": "5.3.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
+    "viem": "2.58.0",
     "zod": "4.6.7"
   },
   "devDependencies": {

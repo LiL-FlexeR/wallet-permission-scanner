@@ -7,13 +7,19 @@ import {
   readinessSchema,
 } from '@wps/contracts';
 import { createApp } from '../src/app.js';
+import { BlockchainReadiness } from '../src/blockchain/blockchain-readiness.js';
+import { block, rpcFetch } from './blockchain-fixtures.js';
+import { systemClock } from '../src/blockchain/work-budget.js';
 
 for (const mode of ['live', 'demo']) {
-  test(`health HTTP contract in ${mode} without provider calls`, async (t) => {
+  test(`health HTTP contract in ${mode}; requests only read cached readiness`, async (t) => {
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = () => {
-      throw new Error('Health must not call a provider.');
-    };
+    let providerCalls = 0;
+    globalThis.fetch = rpcFetch((req) => {
+      providerCalls++;
+      if (mode === 'demo') throw new Error('Demo must not call a provider.');
+      return req.method === 'eth_chainId' ? '0x1' : block(systemClock);
+    });
     t.after(() => {
       globalThis.fetch = originalFetch;
     });
@@ -24,6 +30,8 @@ for (const mode of ['live', 'demo']) {
     });
     t.after(() => app.close());
     await app.init();
+    await app.get(BlockchainReadiness).whenIdle();
+    assert.equal(providerCalls, mode === 'live' ? 2 : 0);
     const client = request(app.getHttpServer());
     const live = await client
       .get('/health/live')
@@ -36,7 +44,10 @@ for (const mode of ['live', 'demo']) {
     assert.deepEqual(readinessSchema.parse(ready.body), {
       status: 'ready',
       mode,
-      checks: { configuration: 'ok', blockchain: 'not_required' },
+      checks: {
+        configuration: 'ok',
+        blockchain: mode === 'live' ? 'ok' : 'not_required',
+      },
     });
     assert.notEqual(
       live.headers['x-request-id'],
@@ -81,8 +92,39 @@ for (const mode of ['live', 'demo']) {
       .expect(200);
     assert.equal(denied.headers['access-control-allow-origin'], undefined);
     assert.equal(denied.headers['access-control-allow-credentials'], undefined);
+    assert.equal(providerCalls, mode === 'live' ? 2 : 0);
   });
 }
+
+test('live readiness is 503 after failed background probe, while liveness remains 200', async (t) => {
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    throw new Error('https://rpc.invalid/credential');
+  };
+  const app = await createApp({
+    SCAN_MODE: 'live',
+    ETHEREUM_RPC_URL: 'https://rpc.invalid/credential',
+  });
+  t.after(async () => {
+    await app.close();
+    globalThis.fetch = originalFetch;
+  });
+  await app.init();
+  await app.get(BlockchainReadiness).whenIdle();
+  const client = request(app.getHttpServer());
+  const ready = await client.get('/health/ready').expect(503);
+  assert.deepEqual(readinessSchema.parse(ready.body), {
+    status: 'not_ready',
+    mode: 'live',
+    checks: { configuration: 'ok', blockchain: 'unavailable' },
+  });
+  await client.get('/health/live').expect(200);
+  await client.get('/health/ready').expect(503);
+  assert.equal(calls, 1);
+  assert.ok(!JSON.stringify(ready.body).includes('credential'));
+});
 
 test('invalid startup fails before a health server can be created', async () => {
   await assert.rejects(

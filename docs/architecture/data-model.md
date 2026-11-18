@@ -44,7 +44,7 @@ The stable record ID is `1:<lowercase-token-address>:<lowercase-spender-address>
 
 `activity` is `active` for a positive readable allowance, `inactive` for a zero readable allowance, and `unknown` for an unreadable allowance. `allowance: null` requires `activity: unknown` and an allowance warning. `balance: null` requires a balance warning. Missing name, symbol, or decimals requires the corresponding warning. A formatted amount can be null solely because decimals failed even when the raw value is known.
 
-All record and envelope fields, query behavior, counts, example JSON, and error enums are defined in the [API contract](api-design.md). Runtime schemas in the future `packages/contracts` package enforce that contract. Domain types using `bigint` remain internal to the backend.
+All record and envelope fields, query behavior, counts, example JSON, and error enums are defined in the [API contract](api-design.md). `packages/contracts` currently supplies health/error schemas and shared EIP-55 validation; Stage 03 adds the scan schemas that enforce this contract. Stage 02 domain types using `bigint` and discriminated field results remain internal to the backend.
 
 ## Deterministic risk policy: `mvp-1`
 

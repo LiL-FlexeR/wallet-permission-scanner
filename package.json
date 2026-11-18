@@ -15,6 +15,7 @@
     "typecheck": "pnpm --filter @wps/contracts build && pnpm -r typecheck",
     "test": "pnpm --filter @wps/contracts build && pnpm -r --if-present test",
     "test:production": "node scripts/production-smoke.mjs",
+    "test:blockchain:live": "pnpm --filter @wps/contracts build && pnpm --filter @wps/api build && pnpm --filter @wps/api test:blockchain:live",
     "compose:check": "docker compose -f infra/compose.yaml config --quiet",
     "compose:up": "docker compose -f infra/compose.yaml up --build --wait --wait-timeout 180",
     "compose:down": "docker compose -f infra/compose.yaml down"

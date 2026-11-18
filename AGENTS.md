@@ -5,7 +5,7 @@ These instructions apply throughout this project. Follow the current user reques
 ## Start of a task
 
 - Read the [README](README.md), [roadmap](docs/features/ROADMAP.md), and the detailed specification for the stage being changed. Read the relevant architecture documents before changing contracts, blockchain behavior, risk rules, or deployment assumptions.
-- Check the actual files and package scripts before acting. **Stage 01 foundation is implemented**: application shells, workspace manifests, configuration/health/proxy tests, and local containers exist. Scanning, blockchain reads, risk analysis, product UI, and deployment remain unimplemented. Consult the roadmap for verified completion gates.
+- Check the actual files and package scripts before acting. **Stages 01–02 are implemented**: application shells, workspace tooling/local containers, shared address validation, reviewed registry, bounded internal blockchain readers and background readiness exist. Public scan/coverage APIs, risk analysis, product UI, and deployment remain unimplemented. Optional live RPC verification has not run without credentials. Consult the roadmap for verified completion gates.
 - Work only on the requested task or implementation stage. Documentation, skill setup, and adding design context do not start application implementation. When the user requests implementation, follow that stage's prerequisites and acceptance criteria without asking again for already-authorized work.
 - Write project documentation in English. Preserve unrelated changes and owner-supplied source materials.
 

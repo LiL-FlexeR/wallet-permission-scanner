@@ -2,7 +2,7 @@
 
 ## Current and proposed structure
 
-The repository contains the README, root [AGENTS.md](../../AGENTS.md), [skills inventory](../../skills.md), documentation, local Codex skills, and the owner's [design reference pack](../design/DESIGN.md). Stage 01 adds the web/API shells, shared contracts and TypeScript configuration, foundation tests, workspace tooling, `scripts/production-smoke.mjs`, and local Compose/build helpers. The tree below also specifies future stage outputs: scanner, blockchain, registry, risk, shared scan fixtures/E2E, production Dockerfiles, and CI are not implemented. Create those incrementally in their owning stages.
+The repository contains the README, root [AGENTS.md](../../AGENTS.md), [skills inventory](../../skills.md), documentation, local Codex skills, and the owner's [design reference pack](../design/DESIGN.md). Stage 01 adds the web/API shells, shared contracts and TypeScript configuration, foundation tests, workspace tooling, `scripts/production-smoke.mjs`, and local Compose/build helpers. Stage 02 implements `blockchain/`, `registry/`, shared address validation, reader/transport fixtures, background readiness, and the opt-in live smoke entry point. The tree below also specifies future stage outputs: public scanner/API orchestration, risk, shared HTTP scan fixtures/E2E, production Dockerfiles, and CI are not implemented. Create those incrementally in their owning stages.
 
 ```text
 apps/

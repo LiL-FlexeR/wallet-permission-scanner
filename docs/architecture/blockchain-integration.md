@@ -1,5 +1,7 @@
 # Blockchain Integration
 
+Stage 02 implements this internal capability with viem `2.58.0`, a public client, an abort-aware custom HTTP transport, and shared EIP-55 validation using browser-compatible `@noble/hashes` `2.4.0`. The initial `mainnet-1` registry and its primary sources are recorded in [registry provenance](registry-provenance.md). Deterministic tests exercise adapter behavior; no live provider/deployment check ran without credentials. Public scan orchestration and HTTP serialization remain Stage 03.
+
 ## Selected MVP strategy
 
 Use a server-controlled registry of explicit `(chainId, tokenAddress, spenderAddress)` pairs, then read each pair's allowance. Direct RPC is sufficient for this bounded question. It is insufficient for a claim of complete wallet discovery. The API and frontend must always explain that coverage consists only of the published registry.
@@ -47,7 +49,7 @@ For every live scan:
 4. Read `allowance(owner, spender)` once per pair and `balanceOf(owner)` once per unique token, prioritizing these before optional metadata. Read `name()`, `symbol()`, and `decimals()` once per unique token within the same budget.
 5. Return typed per-field results, including failures, and the captured block identity. A shared token read failure affects all pairs for that token without repeating the read.
 
-The finalized tag intentionally sacrifices head freshness for a stable snapshot. Unsupported finalized reads or unavailable recent state are explicit failures, not a silent switch to latest. No archive node is required for ordinary recent snapshots, but the provider must support `eth_call` at the selected recent block. A dishonest RPC provider or exceptional finality violation remains outside the MVP's verification guarantees.
+The finalized tag intentionally sacrifices head freshness for a stable snapshot. Unsupported finalized reads or unavailable recent state are explicit failures, not a silent switch to latest. Nonstandard bytes32 metadata is not guessed: it becomes an `INVALID_RETURN_DATA` field failure. No archive node is required for ordinary recent snapshots, but the provider must support `eth_call` at the selected recent block. A dishonest RPC provider or exceptional finality violation remains outside the MVP's verification guarantees.
 
 See viem's [block action](https://viem.sh/docs/actions/public/getBlock) and [readContract action](https://viem.sh/docs/contract/readContract). Use the installed version's supported APIs when implementing.
 
@@ -78,7 +80,7 @@ Start without JSON-RPC batching or Multicall. Individual pinned reads simplify e
 
 Retry only transient transport errors, provider throttling, and eligible server failures, at most once after bounded jitter around 200 ms and only if the deadline permits. Honor a provider retry delay only when it fits the remaining budget; otherwise fail the affected read. Do not retry deterministic contract reverts or invalid decode results. Disable overlapping viem retry layers and hidden defaults that could multiply attempts. Do not sleep through the total deadline.
 
-Use one explicit provider initially. There is no public endpoint fallback, cross-provider merge, or demo fallback. A future secondary provider would need chain and block identity agreement and privacy/quota review. Failures become normalized codes, never raw provider messages or URLs. Release concurrency permits after cancellation settles, including client disconnects.
+The initial documented operator option is an Alchemy Ethereum mainnet HTTPS endpoint, supplied explicitly through `ETHEREUM_RPC_URL`; an equivalent standard JSON-RPC provider is acceptable only after the opt-in compatibility smoke check. See the [README provider requirements](../../README.md#internal-blockchain-capability). Use one explicit provider initially. There is no public endpoint fallback, cross-provider merge, or demo fallback. A future secondary provider would need chain and block identity agreement and privacy/quota review. Failures become normalized codes, never raw provider messages or URLs. Release concurrency permits after cancellation settles, including client disconnects.
 
 ## Verification boundaries
 

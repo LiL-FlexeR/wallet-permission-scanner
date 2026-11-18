@@ -30,17 +30,17 @@ Implement viem configuration, shared address validation, registry validation, ch
 
 ## Implementation Tasks
 
-- [ ] Define `EthereumReader` input/output types: owner, immutable registry snapshot, shared deadline/cancellation, block identity, and per-token/per-pair field results. Keep HTTP DTOs separate.
-- [ ] Implement one shared address normalizer and boundary fixtures before using addresses as keys or RPC arguments.
-- [ ] Add typed registry entries, startup validation, consistent provenance, stable versioning, and normalized tuple IDs. Keep pair expansion explicit.
-- [ ] Review deployment documentation for the initial live entries; record sources/review dates. Verify contract bytecode in a separately invoked live smoke check.
-- [ ] Configure the viem public client and abort-aware bounded HTTP transport for the installed version; test that upstream size and timeout limits work before concurrent reads.
-- [ ] Implement chain and finalized-block preflight, including stale and future timestamp rejection.
-- [ ] Implement deduplicated token reads and pair allowances with numeric block pinning and fair bounded scheduling. Preserve exact raw results and null-capable metadata.
-- [ ] Normalize contract, decode, transport, throttling, timeout, and deadline failures into the agreed field codes. Retry eligible transient failures only once if budget remains.
-- [ ] Provide deterministic synthetic reader/transport fixtures for success, zero, active, metadata failure, partial, and total provider failure. Final public demo packaging belongs to Stage 06.
-- [ ] Replace Stage 01's live readiness placeholder with the bounded cached probe; ensure health requests themselves never cause RPC traffic.
-- [ ] Run deterministic tests and the optional live read smoke check when credentials are available. Document provider requirements and any unsupported token behavior without broadening coverage claims.
+- [x] Define `EthereumReader` input/output types: owner, immutable registry snapshot, shared deadline/cancellation, block identity, and per-token/per-pair field results. Keep HTTP DTOs separate.
+- [x] Implement one shared address normalizer and boundary fixtures before using addresses as keys or RPC arguments.
+- [x] Add typed registry entries, startup validation, consistent provenance, stable versioning, and normalized tuple IDs. Keep pair expansion explicit.
+- [x] Review deployment documentation for the initial live entries; record sources/review dates. Provide a separately invoked live smoke check for contract bytecode (implemented and fixture-tested; live execution not run without credentials).
+- [x] Configure the viem public client and abort-aware bounded HTTP transport for the installed version; test that upstream size and timeout limits work before concurrent reads.
+- [x] Implement chain and finalized-block preflight, including stale and future timestamp rejection.
+- [x] Implement deduplicated token reads and pair allowances with numeric block pinning and fair bounded scheduling. Preserve exact raw results and null-capable metadata.
+- [x] Normalize contract, decode, transport, throttling, timeout, and deadline failures into the agreed field codes. Retry eligible transient failures only once if budget remains.
+- [x] Provide deterministic synthetic reader/transport fixtures for success, zero, active, metadata failure, partial, and total provider failure. Final public demo packaging belongs to Stage 06.
+- [x] Replace Stage 01's live readiness placeholder with the bounded cached probe; ensure health requests themselves never cause RPC traffic.
+- [x] Run deterministic tests and the optional live read smoke check when credentials are available. Document provider requirements and any unsupported token behavior without broadening coverage claims.
 
 Implement validation and the reader interface first, preflight second, and contract fan-out only after cancellation and attempt limits work.
 
@@ -114,3 +114,19 @@ All tasks, edge-case tests, and acceptance criteria pass; registry provenance an
 ## Out of Scope
 
 Public scan API, risk labels, historical log discovery, hosted indexers, wallet connection, arbitrary user token lists, multi-chain support, persistent caches, price feeds, and transactions.
+
+
+## Verification record — 2026-11-18
+
+Stage 02 is implemented as an internal capability. Stages 03–06 were not started. No public scan/coverage route, risk calculation, frontend surface, database, external service account, or writable chain operation was added.
+
+- viem `2.58.0` and browser-compatible `@noble/hashes` `2.4.0` are pinned in the manifests and lockfile. Official viem custom-transport/read/block documentation and the installed source were checked, including disabling its default retry layer, Multicall and CCIP offchain lookup.
+- The shared address normalizer is tested against all ERC-55 reference vectors, invalid mixed case, uniform case, whitespace, zero and non-address inputs. Registry validation covers normalized tuple duplicates, bounds, source URLs/dates and identity consistency; snapshots are immutable and pairs explicit.
+- `mainnet-1` contains three reviewed pairs across USDC/WETH9 and two Uniswap router deployments. Primary sources, review date and identity-only meaning are recorded in [registry provenance](../../architecture/registry-provenance.md).
+- Reader fixtures verify per-invocation chain checks, one finalized snapshot, age/future boundaries, missing/unsupported finalized state, numeric block pinning, deduplicated token fields, core-read priority, maximum/near-maximum integers, decimals 0/255, optional/malformed metadata, revert/partial/total provider failures, and failure codes without provider text.
+- Fake-clock tests cover retry count/jitter, provider retry delays, total deadlines, cancellation during retry and while queued, four reads per scan, four admitted scans without a queue, sixteen global RPC calls including probes, readiness freshness and shutdown settlement. Real local HTTP tests verify native fetch cancellation, timeout socket closure, streamed response overflow and redirect refusal. No detached work or leaked permits remained in the tested cases.
+- Live readiness probes begin during initialization, repeat every 30 seconds, have no retries and a six-second total budget, and share global permits. Health HTTP tests verify cached `200`/`503` behavior, liveness independence, demo without RPC, and no extra provider calls from health requests.
+- Workspace lint, formatting, strict type checking, **68 deterministic tests (61 API / 7 web)**, both production builds and `test:production` passed. Production smoke verifies demo health, actual unimplemented API routing, runtime proxy target changes, cancellation, invalid-startup redaction and browser artifact inspection. The local environment used `corepack pnpm` for the pinned pnpm version; loopback HTTP tests and Next production build required execution outside the filesystem/network sandbox. No Dockerfile/Compose change was needed; container checks were not repeated for this backend-only stage.
+- `pnpm test:blockchain:live` is implemented, documented and covered with deterministic transport fixtures. **The optional live check was not run: no RPC URL/credential was available.** No live allowance, bytecode, provider latency or availability claim is made. Alchemy mainnet HTTPS is the documented initial operator option; provider compatibility still requires that separate check.
+
+The stable handoff for Stage 03 is `EthereumReader`/`ReadInput`, the immutable registry, `WorkBudget` created at admission, `ReaderFailure` preflight codes, and per-field `ReadResult` codes. Total post-preflight field failure remains an internal result; the Stage 03 orchestrator must map it to the documented HTTP failure instead of an empty success. Caller cancellation uses internal `CANCELLED` before fan-out; unresolved fields after fan-out use `DEADLINE_EXCEEDED`. No HTTP scan DTO or risk type is exported by the reader.

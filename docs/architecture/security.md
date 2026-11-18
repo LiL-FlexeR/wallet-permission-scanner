@@ -75,6 +75,8 @@ Do not call the API an audit or promise complete approval discovery. Explanation
 
 ## Security review gate
 
+Stage 02 evidence is recorded in the [blockchain verification record](../features/stages/02-blockchain-integration.md#verification-record--2026-11-18): bounded read-only RPC destinations/methods, chain/snapshot checks, bigint validation, metadata bounds, abort/permit cleanup, readiness and safe field codes have deterministic adapter/HTTP tests. This is not the Stage 05 security review. Public scan rate limits, request schemas and risk interpretation remain Stage 03 work; frontend metadata rendering remains Stage 04 work. The optional live provider/bytecode check was not run without credentials.
+
 Stage 05 must record tested controls and remaining limitations in this document. At minimum review validation, proxy header handling, RPC destinations, cancellation and permit cleanup, error redaction, metadata rendering, exact arithmetic, secret exposure in frontend builds, schema drift, and all safety/coverage language. No funded account, signature, approval, or transfer is needed for verification.
 
 Stage 06 repeats only deployment-specific checks: HTTPS and headers, private service boundaries, environment injection, log retention, single-replica limits, production demo labeling, container users, and CI permissions. See [testing/security stage](../features/stages/05-testing-and-security.md) and [release stage](../features/stages/06-deployment-and-release.md).

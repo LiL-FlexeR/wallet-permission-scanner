@@ -1,11 +1,11 @@
 # Implementation Roadmap
 
-Status: **Stage 01 complete** (2026-11-18). The foundation is implemented and verified; Stages 02–06 have not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
+Status: **Stages 01–02 complete** (2026-11-18). Foundation and internal blockchain integration are implemented and deterministically verified. Optional live RPC/deployment smoke has not run without credentials. Stages 03–06 have not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
 
 ## Overall progress
 
 - [x] Stage 01 — Project Foundation
-- [ ] Stage 02 — Blockchain Integration
+- [x] Stage 02 — Blockchain Integration
 - [ ] Stage 03 — Backend API and Risk Analysis
 - [ ] Stage 04 — Frontend Integration
 - [ ] Stage 05 — Testing and Security
@@ -25,7 +25,7 @@ Dependency chain: **01 → 02 → 03 → 04 → 05 → 06**. The owner has suppl
 
 ## Stage 02 — Blockchain Integration
 
-- **Progress:** [ ] Not started.
+- **Progress:** [x] Complete — 2026-11-18. Internal reader, address validation, reviewed three-pair registry, bounded transport/scheduling and cached live readiness are implemented. Deterministic checks and production smoke passed; optional live provider/deployment verification was not run because no credential was available. See the stage verification record and [registry provenance](../architecture/registry-provenance.md).
 - **Objective:** Read configured mainnet permissions reliably at one recent finalized block.
 - **Scope summary:** viem public client, address/checksum validation, chain verification, registry/provenance, ERC-20 metadata/balances/allowances, exact quantities, typed field failures, bounded RPC work, readiness probes.
 - **Main deliverables:** Injectable reader, read-only ABI, reviewed initial registry, deterministic transport fixtures, retry/timeout/cancellation controls, live readiness, optional live-smoke instructions.
