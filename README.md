@@ -1,6 +1,6 @@
 # Wallet Permission Scanner
 
-**Status: Stages 01–03 complete (2026-11-19).** The workspace has runnable Next.js and NestJS shells, bounded scan/coverage APIs, shared runtime contracts, pure `mvp-1` exposure analysis, a reviewed Ethereum mainnet pair registry, explicit synthetic demo mode, generated OpenAPI, deterministic tests, and local two-service Compose. Product UI and production deployment remain planned. Optional live RPC verification has not run because no credential was available.
+**Status: Stages 01–04 complete (2026-11-19).** The workspace has a reference-guided scanner interface, bounded scan/coverage APIs, shared runtime contracts, pure `mvp-1` exposure analysis, a reviewed Ethereum mainnet pair registry, explicit synthetic demo mode, generated OpenAPI, deterministic unit/HTTP/browser tests, and local two-service Compose. Stage 05 security review and Stage 06 production deployment remain unstarted. Optional live RPC verification has not run because no credential was available.
 
 ## Purpose and boundaries
 
@@ -8,7 +8,7 @@ Token allowances can remain active after a user stops using an application. The 
 
 Coverage is limited to an explicitly maintained set of token/spender pairs. A complete scan means that the configured set was checked, **not that every approval was discovered**. Historical events are candidate evidence; current allowances will be re-read at a stated finalized snapshot. See the [blockchain strategy](docs/architecture/blockchain-integration.md).
 
-Implemented backend features include address/checksum validation, allowance and balance reads, explainable versioned heuristics, partial/unknown results, fixed-origin explorer URLs, and an explicitly labeled synthetic demo. Frontend rendering, filtering and sorting belong to Stage 04. Risk labels describe permission exposure, not maliciousness or contract safety. Amounts use bigint internally and exact decimal strings over HTTP.
+Implemented features include address/checksum validation, allowance and balance reads, explainable versioned heuristics, partial/unknown results, fixed-origin explorer URLs, and an explicitly labeled synthetic demo. The frontend displays exact values, field warnings, snapshot/source/coverage information, explanations, conjunctive filters and stable sorting. Risk labels describe permission exposure, not maliciousness or contract safety. Amounts use bigint internally and exact decimal strings over HTTP and in the interface.
 
 The MVP excludes private keys, seed phrases, signing, transactions, revocation, custody, NFTs, ENS, fiat exposure, authentication, persistent history, and comprehensive approval discovery. PostgreSQL/Prisma, Redis, queues, and indexers are deferred. The viem public client is backend-only.
 
@@ -20,12 +20,13 @@ Direct application dependencies are pinned and transitive dependencies are recor
 | ------------------- | ------------------- | ----------------------------------------------------------------------------------------- |
 | Node.js             | `24.16.0` LTS       | `.nvmrc`; engines require `>=24.16.0 <25`; same runtime in local images                   |
 | pnpm                | `12.21.0`           | Root `packageManager`; strict peer dependency checks                                      |
-| Next.js / React     | `16.4.6` / `19.3.1` | App Router; server components; no styling or client interaction yet                       |
+| Next.js / React     | `16.4.6` / `19.3.1` | App Router server shell and local scanner client boundary                                 |
 | NestJS / config     | `12.5.1` / `12.1.1` | ESM, Express 5, explicit constructor injection                                            |
 | TypeScript          | `6.0.3`             | Strict shared settings; NodeNext for API/contracts, Bundler for web                       |
 | Zod                 | `4.6.7`             | Shared runtime schemas and local environment validation                                   |
 | viem / noble hashes | `2.58.0` / `2.4.0`  | Backend public client; browser-compatible Keccak for the shared EIP-55 normalizer         |
 | ESLint / Prettier   | `9.39.5` / `3.10.1` | ESLint 9 matches Next's plugins; TypeScript 6 matches typescript-eslint's supported range |
+| Playwright / axe    | `1.65.1` / `4.14.0` | Test-only Chromium interaction and automated accessibility checks                         |
 
 Versions were checked against official [Node release support](https://nodejs.org/en/about/previous-releases), [Next installation](https://nextjs.org/docs/app/getting-started/installation), [Nest 12 migration guidance](https://docs.nestjs.com/migration-guide), [TypeScript 6 documentation](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-6-0.html), [pnpm installation](https://pnpm.io/installation), and published package/peer metadata on 2026-11-18. ESLint 9 is a compatibility choice despite its npm deprecation notice; revisit it when the installed Next plugins support ESLint 10. TypeScript 7 exceeds typescript-eslint's supported range and is not selected.
 
@@ -49,6 +50,10 @@ The example explicitly selects `SCAN_MODE=demo` so the API can run without an RP
 
 Web listens at `http://localhost:3000`; API at `http://localhost:3001`. The API watcher recompiles changed TypeScript through tsx. Restart the workspace after changing shared contracts, because their exports resolve to compiled JavaScript. Exit development with Ctrl+C.
 
+Open the web app, enter a nonzero Ethereum public address and choose **Scan address** (or press Enter). With the example demo configuration, `0x3333333333333333333333333333333333333333` produces three synthetic permission records without RPC access. Demo source and synthetic snapshots are explicitly labeled; their explorer navigation is disabled. Editing the input does not relabel existing results. Cancel an in-progress scan before starting another through the UI.
+
+Results initially include active, inactive and unknown permissions. Combine token address, spender address, activity and exposure filters; sort by exposure or either address. Amounts are displayed exactly, including raw units when decimals are unknown; cross-asset amount sorting is not offered. Open each explanation or snapshot disclosure for details. Coverage failures have an independent retry. Scan retries are deliberate and respect `Retry-After`; nothing refreshes scans on focus or retries automatically. Wallet input/results are not placed in URLs, persistent storage or analytics. Live scans share the address with the backend and its configured RPC provider; following live explorer links contacts Etherscan.
+
 ## Commands
 
 ```sh
@@ -58,10 +63,14 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm test:production
+pnpm exec playwright install chromium
+pnpm test:e2e
 pnpm docs:generate
 ```
 
 `pnpm format` formats application/configuration files and this README. Existing specifications, skill files, and owner-supplied design exports are excluded. `pnpm typecheck` and `pnpm test` first build shared contracts; `pnpm build` follows workspace dependencies. Tests use Node's test runner, Supertest for real Nest HTTP behavior, and isolated local HTTP servers for proxy behavior. They make no provider calls.
+
+`pnpm test:e2e` builds the production applications and starts its own demo API/web servers on loopback ports `3101`/`3100` (both must be free). Playwright `1.65.1` and `@axe-core/playwright` `4.14.0` are pinned test dependencies. Install Chromium once with the command above; on Linux, missing browser system libraries can be installed with Playwright's documented `install --with-deps chromium` option. The real input-to-result test traverses Next → existing proxy → Nest demo API; failure scenarios use schema-checked synthetic fixtures at the browser HTTP boundary. Traces on failure are stored in ignored `test-results/`. Chromium, keyboard, responsive layout and axe checks do not replace Stage 05's broader security review or human assistive-technology testing.
 
 After `pnpm build`, the two production servers can also be started separately:
 
@@ -164,11 +173,14 @@ Use the Docker context/socket for your running daemon. This environment required
 ## Structure and architecture
 
 ```text
-apps/web/                    Next App Router shell and server-only API proxy
+apps/web/                    Next App Router scanner, API client/state/selectors and server-only proxy
 apps/api/                    Nest health/configuration, registry/readers, scan API and pure risk rules
 packages/contracts/          Zod HTTP schemas, EIP-55 validation and synthetic fixtures; no server imports
 packages/typescript-config/  Strict base plus separate Node/Next module settings
 scripts/production-smoke.mjs Production-artifact verification
+tests/e2e/                   Deterministic Chromium interaction and accessibility checks
+tests/fixtures/              Schema-checked synthetic frontend scenarios
+playwright.config.ts         Isolated production demo servers and browser configuration
 infra/compose.yaml           Local web/API services
 infra/docker/                Local build helper
 docs/architecture/           Contracts, safety requirements, decisions
@@ -177,9 +189,9 @@ docs/design/                 Owner-supplied Refero references, preserved
 .agents/skills/              Project-local Codex skills
 ```
 
-The backend owns chain retrieval, bounded orchestration, serialization and pure deterministic risk rules. The browser will validate shared HTTP schemas and never receive RPC credentials. See the [overview](docs/architecture/overview.md), [project structure](docs/architecture/project-structure.md), [API contract](docs/architecture/api-design.md), [security specification](docs/architecture/security.md), and [ADR-001](docs/architecture/decisions/ADR-001-architecture.md).
+The backend owns chain retrieval, bounded orchestration, serialization and pure deterministic risk rules. The browser validates shared HTTP schemas, interprets supported signal codes and never receives RPC credentials. See the [overview](docs/architecture/overview.md), [project structure](docs/architecture/project-structure.md), [API contract](docs/architecture/api-design.md), [security specification](docs/architecture/security.md), and [ADR-001](docs/architecture/decisions/ADR-001-architecture.md).
 
-The root [AGENTS.md](AGENTS.md) and [skills inventory](skills.md) carry project instructions. The owner reference pack under [docs/design](docs/design/DESIGN.md) is reserved for Stage 04. Its Base branding and extraction examples do not change the mainnet network or product scope. Stages 01–02 did not install or apply fonts, Tailwind, shadcn, or reconstructed design components.
+The root [AGENTS.md](AGENTS.md) and [skills inventory](skills.md) carry project instructions. Stage 04 uses the owner reference pack under [docs/design](docs/design/DESIGN.md), preserving all four exports. The owner resolved extraction conflicts in favor of the blue primary button and the DESIGN.md/variables.css type scale. App-specific CSS imports the variables export, maps secondary text to Graphite for contrast, and adapts the fixed rail to mobile navigation. Reference fonts are not bundled or installed; supplied system fallbacks are used without third-party font requests. Tailwind/shadcn are optional and were not added: native controls meet this surface's needs. Base branding, sample metrics and network support were not copied.
 
 ## Roadmap and verification
 
@@ -188,14 +200,16 @@ The root [AGENTS.md](AGENTS.md) and [skills inventory](skills.md) carry project 
 | [01 — Foundation](docs/features/stages/01-project-foundation.md)             | Complete — verified 2026-11-18                            |
 | [02 — Blockchain](docs/features/stages/02-blockchain-integration.md)         | Complete — deterministic verification; live smoke not run |
 | [03 — API and risk](docs/features/stages/03-backend-and-risk-analysis.md)    | Complete — verified 2026-11-19                            |
-| [04 — Frontend](docs/features/stages/04-frontend-integration.md)             | Not started                                               |
+| [04 — Frontend](docs/features/stages/04-frontend-integration.md)             | Complete — verified 2026-11-19                            |
 | [05 — Testing and security](docs/features/stages/05-testing-and-security.md) | Not started                                               |
 | [06 — Release](docs/features/stages/06-deployment-and-release.md)            | Not started                                               |
 
-Use the [roadmap](docs/features/ROADMAP.md) for acceptance gates. Historical Stage 01 verification covers configuration rejection/redaction, health and input limits in both modes with provider calls forbidden, proxy bounds/headers/cancellation, independent shared-package resolution, lint/type checks, production builds, runtime startup/proxy smoke, and local Compose readiness/routing. Stage 02 adds reader/transport tests; Stage 03 adds scan, risk, abuse controls and OpenAPI checks. Later stages add frontend and cross-layer coverage. There is no live blockchain or public deployment verification in Stage 01.
+Use the [roadmap](docs/features/ROADMAP.md) for acceptance gates. Historical Stage 01 verification covers configuration rejection/redaction, health and input limits in both modes with provider calls forbidden, proxy bounds/headers/cancellation, independent shared-package resolution, lint/type checks, production builds, runtime startup/proxy smoke, and local Compose readiness/routing. Stage 02 adds reader/transport tests; Stage 03 adds scan, risk, abuse controls and OpenAPI checks; Stage 04 adds frontend and browser coverage. Stage 05's broader security review remains pending.
 
 Stage 01 verified on 2026-11-18: lint, formatting, strict type checking, 35 deterministic tests (28 API / 7 web), both production builds, production smoke, development startup in an isolated container, and local Compose health/routing. The environment's occupied host port `3000` required Compose host-port overrides `3300/3301`; internal addressing stayed `api:3001`. Verification containers were stopped afterward. See the [Stage 01 verification record](docs/features/stages/01-project-foundation.md#verification-record--2026-11-18). No Git commit was created; changes are ready for review.
 
-Stage 02 verified on 2026-11-18: lint, formatting, strict type checking, **68 deterministic tests (61 API / 7 web)**, both production builds and production smoke. Tests include real local HTTP cancellation/response limits and fake-clock retry/deadline/concurrency/readiness checks. Optional live RPC/bytecode verification was not run without credentials. See the [Stage 02 verification record](docs/features/stages/02-blockchain-integration.md#verification-record--2026-11-18). Stages 04–06 remain unstarted.
+Stage 02 verified on 2026-11-18: lint, formatting, strict type checking, **68 deterministic tests (61 API / 7 web)**, both production builds and production smoke. Tests include real local HTTP cancellation/response limits and fake-clock retry/deadline/concurrency/readiness checks. Optional live RPC/bytecode verification was not run without credentials. See the [Stage 02 verification record](docs/features/stages/02-blockchain-integration.md#verification-record--2026-11-18).
 
-Stage 03 verified on 2026-11-19: lint, formatting, strict type checking, **112 deterministic tests (105 API / 7 web)**, reproducible OpenAPI generation, both production builds and production smoke through the real scan/coverage proxy. Live-mode adapter responses use deterministic transport fixtures; no live RPC check ran. See the [Stage 03 verification record](docs/features/stages/03-backend-and-risk-analysis.md#verification-record--2026-11-19). No Stage 04–06 implementation was started.
+Stage 03 verified on 2026-11-19: lint, formatting, strict type checking, **112 deterministic tests (105 API / 7 web)**, reproducible OpenAPI generation, both production builds and production smoke through the real scan/coverage proxy. Live-mode adapter responses use deterministic transport fixtures; no live RPC check ran. See the [Stage 03 verification record](docs/features/stages/03-backend-and-risk-analysis.md#verification-record--2026-11-19).
+
+Stage 04 verified on 2026-11-19: lint/format/type checks, **121 deterministic unit/HTTP tests (105 API / 16 web)**, both production builds, production smoke and **13 Chromium browser tests**. Axe found no violations in idle and expanded partial-result states. Layouts were checked at 320, 390 and 1440 px; desktop/mobile screenshots were visually inspected. See the [Stage 04 verification record](docs/features/stages/04-frontend-integration.md#verification-record--2026-11-19). Live RPC, Firefox/WebKit, human screen-reader testing, public deployment and the broader Stage 05 review were not performed.

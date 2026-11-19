@@ -1,13 +1,13 @@
 # Implementation Roadmap
 
-Status: **Stages 01–03 complete** (2026-11-19). Foundation, internal blockchain integration and the bounded public scan/risk API are implemented and deterministically verified. Optional live RPC/deployment smoke has not run without credentials. Stages 04–06 have not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
+Status: **Stages 01–04 complete** (2026-11-19). Foundation, internal blockchain integration, bounded public scan/risk API and the reference-guided frontend are implemented and deterministically verified. Optional live RPC/deployment smoke has not run without credentials. Stages 05–06 have not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
 
 ## Overall progress
 
 - [x] Stage 01 — Project Foundation
 - [x] Stage 02 — Blockchain Integration
 - [x] Stage 03 — Backend API and Risk Analysis
-- [ ] Stage 04 — Frontend Integration
+- [x] Stage 04 — Frontend Integration
 - [ ] Stage 05 — Testing and Security
 - [ ] Stage 06 — Deployment and Release
 
@@ -45,7 +45,7 @@ Dependency chain: **01 → 02 → 03 → 04 → 05 → 06**. The owner has suppl
 
 ## Stage 04 — Frontend Integration
 
-- **Progress:** [ ] Not started.
+- **Progress:** [x] Complete — 2026-11-19. Reference-guided interface, typed/schema-validated client, independent coverage, local request lifecycle/cancellation, exact values, signal/field explanations, stable conjunctive filters/sorts and fixed-origin links are implemented. Lint/format/type checks, 121 deterministic unit/HTTP tests (105 API / 16 web), production builds/smoke and 13 Chromium browser tests passed. Owner resolved the blue-action/type-scale extraction conflicts; four source exports are preserved. Axe, keyboard and 320/390/1440 px layouts were checked. See the [verification record](stages/04-frontend-integration.md#verification-record--2026-11-19). Live RPC and the broader Stage 05 review remain unperformed.
 - **Objective:** Let users submit addresses and interpret/filter/sort supported permission results using the API contract.
 - **Scope summary:** Validated input, scan requests, request state/cancellation, schema-checked responses, permission data and explanations, coverage/freshness/source information, safe explorer links, filtering/sorting, loading/empty/partial/error handling.
 - **Main deliverables:** Typed API client, local state and selectors, complete interaction path, risk explanations, deterministic functional tests, implementation based on supplied Refero references.

@@ -244,7 +244,15 @@ try {
   })) {
     if (entry.isFile() && /\.(js|json|html)$/.test(entry.name)) {
       const text = await readFile(`${entry.parentPath}/${entry.name}`, 'utf8');
-      for (const forbidden of ['ETHEREUM_RPC_URL', 'API_PROXY_TARGET', secret])
+      for (const forbidden of [
+        'ETHEREUM_RPC_URL',
+        'API_PROXY_TARGET',
+        secret,
+        '@nestjs/',
+        'viem/',
+        '@wps/api',
+        'ViemEthereumReader',
+      ])
         assert.ok(
           !text.includes(forbidden),
           `Server-only value leaked into browser artifact: ${forbidden}`,

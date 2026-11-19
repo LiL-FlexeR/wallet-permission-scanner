@@ -68,16 +68,16 @@ Support keyboard submission, accessible names, discoverable validation errors, a
 
 ## Implementation Tasks
 
-- [ ] Confirm the API/shared schema and deterministic fixtures from Stage 03; read all four supplied docs/design files and identify any unresolved decisions affecting the requested surface before visual work.
-- [ ] Implement a small API client with schema validation, no-store behavior, timeout/abort, error parsing, and retry-delay handling.
-- [ ] Implement address input normalization tests, request state/reducer, stale-response protection, and independent coverage loading.
-- [ ] Implement pure record filters and stable sort selectors with bigint comparisons only where token units match.
-- [ ] Implement code-to-explanation mappings for every `mvp-1` signal and assessment state; test consistency with backend fixtures.
-- [ ] Test non-visual integration against deterministic API responses. If references are absent, stop dependent visual work here and report the outstanding requirement.
-- [ ] Once references are supplied, implement the user-facing functionality using them as the visual source of truth; do not derive a new design from this document.
-- [ ] Integrate coverage/snapshot/source information, allowance and balance values, field warnings, unknown states, filters/sorting, and safe explorer links.
-- [ ] Add functional interaction and browser tests for success, inactive-only, partial, failure, filtering, invalid input, cancellation, and rate-limit retry.
-- [ ] Verify browser bundles/configuration contain no RPC credentials or backend-only modules, and update real usage instructions.
+- [x] Confirm the API/shared schema and deterministic fixtures from Stage 03; read all four supplied docs/design files and identify any unresolved decisions affecting the requested surface before visual work.
+- [x] Implement a small API client with schema validation, no-store behavior, timeout/abort, error parsing, and retry-delay handling.
+- [x] Implement address input normalization tests, request state/reducer, stale-response protection, and independent coverage loading.
+- [x] Implement pure record filters and stable sort selectors with bigint comparisons only where token units match. Amount sorting is not offered.
+- [x] Implement code-to-explanation mappings for every `mvp-1` signal and assessment state; test consistency with backend fixtures.
+- [x] Test non-visual integration against deterministic API responses. If references are absent, stop dependent visual work here and report the outstanding requirement.
+- [x] Once references are supplied, implement the user-facing functionality using them as the visual source of truth; do not derive a new design from this document.
+- [x] Integrate coverage/snapshot/source information, allowance and balance values, field warnings, unknown states, filters/sorting, and safe explorer links.
+- [x] Add functional interaction and browser tests for success, inactive-only, partial, failure, filtering, invalid input, cancellation, and rate-limit retry.
+- [x] Verify browser bundles/configuration contain no RPC credentials or backend-only modules, and update real usage instructions.
 
 Data client and state work can run without visual references; user-facing implementation and visual acceptance cannot.
 
@@ -150,3 +150,36 @@ All tasks and acceptance criteria, including reference-dependent implementation,
 ## Out of Scope
 
 Defining layouts, colors, typography, component arrangements, styling rules, design tokens, wireframes, or a design system in this specification. Also excluded: wallet connection, signing/revocation, authentication, persistent history, pricing, comprehensive discovery, and new backend risk rules.
+
+## Verification record — 2026-11-19
+
+Stage 04 is complete. Stages 05 and 06 were not started. Shared HTTP contracts, backend endpoints, registry and risk policy were not changed.
+
+### Implementation and reference decisions
+
+- `apps/web/src/features/scanner/` contains the relative same-origin API client, request reducer/hook, pure filters/sorts, exhaustive `mvp-1` signal/assessment/field-warning explanations, and scanner interactions. App Router keeps static page content on the server and a local client boundary for interaction, following the installed Next/React versions.
+- The API client validates actual success/error bodies with shared runtime schemas, matches the returned wallet to the submitted address, bypasses caching, omits credentials, enforces the 20-second timeout and propagates cancellation. It handles all documented error codes without raw messages/traces and retains validated request IDs/retry delays. Unknown policy/signal/schema data is an explicit compatibility failure. No automatic scan retry, focus refresh or fixture fallback exists.
+- Request sequence tokens and abort checks prevent stale completions. New submissions clear old data and reset filters; editing the input alone does not relabel accepted results. Coverage loads/retries independently and refreshes once per accepted scan on registry/policy/source mismatch without reinterpreting the accepted response. All state stays in page memory.
+- All returned records are shown initially. Token address, spender address, activity and exposure filters combine conjunctively. Risk/address sorts are deterministic with stable ID tie-breakers. Amount sorting is intentionally omitted; formatted and raw decimal strings remain exact, and unavailable decimals/balances/allowances are never guessed.
+- Read all four owner references: [DESIGN.md](../../design/DESIGN.md), [tokens.json](../../design/tokens.json), [variables.css](../../design/variables.css), [theme.css](../../design/theme.css). The owner explicitly selected the blue primary filled button and the DESIGN.md/variables.css typography scale when asked about conflicting extraction values. The four exports remain unchanged. `globals.css` imports the variables export and adds application mappings, including darker Graphite secondary text for contrast and responsive navigation. No root design document was generated.
+- Reference fonts were not available or bundled; supplied system fallback stacks are used without external font requests. No Tailwind theme is imported into an incompatible toolchain. Native semantic form/select/disclosure controls fit this surface, so Tailwind/shadcn/Lucide packages were not needed. Reference Base branding, chain support and sample metrics were not copied.
+- Applied installed modern-web-guidance (forms, validation timing and accessibility), vercel-react-best-practices, frontend-design and web-design-guidelines; consulted shadcn applicability and playwright-cli's test guidance. No skill installation, Impeccable initialization, native hook, cache or persistence was added. Browser setup installs only necessary test dependencies (`@playwright/test` 1.65.1 and `@axe-core/playwright` 4.14.0, pinned in the lockfile).
+
+### Checks and evidence
+
+| Check | Result |
+| --- | --- |
+| `pnpm lint`, `pnpm format:check`, `pnpm typecheck` | Passed, including browser test/config types |
+| `pnpm test` | 121 passed: 105 API, 16 web; no provider calls |
+| `pnpm build` | Both production applications built successfully |
+| `pnpm test:production` | Passed: real demo API/proxy, runtime targets, cancellation, startup redaction and browser artifact inspection |
+| `pnpm exec playwright test` / `pnpm test:e2e` | 13 Chromium scenarios passed using isolated production servers and schema-checked synthetic responses |
+| Automated accessibility | Axe reported no violations in idle and expanded partial-result states; keyboard submission, skip link, focus and errors checked |
+| Responsive and visual inspection | 320, 390 and 1440 px without horizontal overflow; inspected desktop/mobile screenshots including missing metadata and max uint256 |
+| Documentation | README usage/commands and affected architecture/roadmap links checked; four owner design exports unchanged |
+
+The browser scenarios cover the real input → Next proxy → Nest demo API path, invalid checksums/no scan request, edited-versus-submitted identity, inactive-only/empty filters, partial zero-readable-plus-unknown data, field warnings, malicious metadata as text, missing decimals with exact maximum values, structured errors/request IDs, 429/busy 503 countdown and deliberate keyboard retry, cancellation/replacement, old-result clearing, 20-second timeout, offline transport, coverage failure/retry/version mismatch, incompatible responses and safe live explorer links. Controlled live-source fixtures test presentation only, not real chain observations. API-client tests additionally cover every documented error code, malformed JSON, unknown signal codes, mismatched wallet responses, pre-aborted and body-time cancellation. Reducer/selectors reject stale actions and preserve source data; explanation keys are checked exhaustively against the shared signal union.
+
+The web-design-guidelines review of `page.tsx`, `globals.css` and the scanner passed after correcting the brand's accessible-name mismatch. Project privacy/exactness requirements override generic guidance to synchronize filters into URLs or format raw token quantities through floating-point number APIs. Readable UTC snapshot timestamps remain explicit.
+
+No live RPC/provider credential was used, no wallet was connected, and no signature or transaction was requested. Firefox/WebKit, human screen-reader testing, broader Stage 05 security review, production CSP/deployment and public hosting remain outside this stage. Automated accessibility checks are limited to the tested states and do not certify universal usability.

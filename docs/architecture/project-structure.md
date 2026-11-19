@@ -2,7 +2,7 @@
 
 ## Current and proposed structure
 
-The repository contains the README, root [AGENTS.md](../../AGENTS.md), [skills inventory](../../skills.md), documentation, local Codex skills, and the owner's [design reference pack](../design/DESIGN.md). Stage 01 adds the web/API shells, shared contracts and TypeScript configuration, foundation tests, workspace tooling, `scripts/production-smoke.mjs`, and local Compose/build helpers. Stage 02 implements `blockchain/`, `registry/`, shared address validation, reader/transport fixtures, background readiness, and the opt-in live smoke entry point. Stage 03 implements public scan/coverage orchestration, pure risk rules, shared runtime HTTP schemas/fixtures, abuse controls and generated OpenAPI under `docs/api/`. The tree below also specifies future stage outputs: product UI, browser E2E, production Dockerfiles and CI are not implemented. Create those incrementally in their owning stages.
+The repository contains the README, root [AGENTS.md](../../AGENTS.md), [skills inventory](../../skills.md), documentation, local Codex skills, and the owner's [design reference pack](../design/DESIGN.md). Stage 01 adds the web/API shells, shared contracts and TypeScript configuration, foundation tests, workspace tooling, `scripts/production-smoke.mjs`, and local Compose/build helpers. Stage 02 implements `blockchain/`, `registry/`, shared address validation, reader/transport fixtures, background readiness, and the opt-in live smoke entry point. Stage 03 implements public scan/coverage orchestration, pure risk rules, shared runtime HTTP schemas/fixtures, abuse controls and generated OpenAPI under `docs/api/`. Stage 04 implements the scanner client/interface and deterministic Chromium tests with `playwright.config.ts`. The tree below also specifies future stage outputs: production Dockerfiles and CI are not implemented. Create those incrementally in their owning stages.
 
 ```text
 apps/
@@ -69,6 +69,8 @@ File names are guides, not a requirement to split every helper into its own file
 ## Frontend application
 
 `apps/web` owns browser behavior, API response validation, request cancellation, and local filtering/sorting. Use App Router conventions appropriate to the installed Next.js version. Keep browser interactions inside client boundaries only where necessary. Do not put an Ethereum RPC client, risk engine, or backend secret in this application.
+
+Stage 04 implements these responsibilities under `src/features/scanner/`, with static shell/copy in `app/page.tsx` and application-specific CSS in `app/globals.css`. Native semantic controls use the preserved owner CSS variables; fonts fall back to the supplied system stacks. No state library, client cache, localStorage, browser history or analytics stores wallet input. Tests in `apps/web/test/` exercise the client/reducer/selectors/explanations; `tests/e2e/` runs against isolated production demo servers with additional schema-checked fixtures in `tests/fixtures/`. The real demo path crosses both applications; synthetic failure routes do not replace the backend implementation.
 
 Before frontend work, follow the root [agent instructions](../../AGENTS.md) and read the existing design description, JSON tokens, CSS custom properties, and Tailwind theme under `docs/design/`. Keep those supplied exports separate from eventual application styles; do not infer Base network support or copy the reference site's product content.
 
