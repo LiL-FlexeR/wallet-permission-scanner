@@ -1,6 +1,6 @@
 # Wallet Permission Scanner
 
-**Status: Stages 01–05 complete (2026-11-19).** The workspace has a reference-guided scanner interface, bounded scan/coverage APIs, shared runtime contracts, pure `mvp-1` exposure analysis, a reviewed Ethereum mainnet pair registry, explicit synthetic demo mode, generated OpenAPI, deterministic unit/HTTP/browser tests, and local two-service Compose. Stage 05 security review, expanded cross-layer checks and clean-install verification are complete; Stage 06 production deployment remains unstarted. Optional live RPC verification has not run because no credential was available.
+**Status: Stages 01–05 complete; Stage 06 in progress (2026-11-19).** The workspace has a reference-guided scanner interface, bounded scan/coverage APIs, shared runtime contracts, pure `mvp-1` exposure analysis, a reviewed Ethereum mainnet pair registry, explicit synthetic demo mode, generated OpenAPI, deterministic unit/HTTP/browser tests, and local two-service Compose. Stage 06 adds production Docker artifacts, prepared Next standalone startup, hardened CI, fixed demo scenarios, bounded shutdown and an [operator runbook](docs/DEPLOYMENT.md). The owner requested artifacts and instructions only: no public deployment or release tag was created. Optional live RPC verification has not run because no credential was available.
 
 ## Purpose and boundaries
 
@@ -64,6 +64,7 @@ pnpm test
 pnpm build
 pnpm test:production
 pnpm exec playwright install chromium
+pnpm test:containers
 pnpm test:e2e
 pnpm docs:generate
 ```
@@ -79,11 +80,11 @@ pnpm --filter @wps/api start
 pnpm --filter @wps/web start
 ```
 
-`pnpm test:production` starts/stops its own processes on ephemeral loopback ports. It checks health, schema-valid demo scan/coverage responses through the actual API and existing proxy, disabled production docs, two runtime targets against the same web build, upstream cancellation on browser disconnect, sanitized invalid startup, and browser artifacts for server-only configuration names. The isolated HTTP servers are test doubles, not application scan handlers.
+`pnpm test:production` starts/stops its own processes on ephemeral loopback ports. It checks health, schema-valid demo scan/coverage responses through the actual API and existing proxy, disabled production docs, two runtime targets against the same web build, upstream cancellation on browser disconnect, sanitized invalid startup, cleanup after an occupied-port live startup, and browser artifacts for server-only configuration names. The isolated HTTP servers are test doubles, not application scan handlers.
 
 ## Configuration
 
-The API's start/dev scripts use Node's environment-file loading for `apps/api/.env`. Next uses its standard environment-file loading under `apps/web`; `.env.local` follows Next's normal precedence. Process environment overrides example files. Actual `.env*` files are ignored by Git and excluded from container builds.
+The API's start/dev scripts use Node's environment-file loading for `apps/api/.env`. Next dev uses its standard environment-file loading under `apps/web`. The host web production start script loads `.env`, `.env.production`, `.env.local`, then `.env.production.local` with Node before standalone validation, preserving that file precedence and process-environment overrides. Production containers use runtime injection and contain no environment files. Actual `.env*` files are ignored by Git and excluded from container builds.
 
 | Variable                  | Consumer        | Behavior                                                                                                                                          |
 | ------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -113,7 +114,9 @@ Liveness is `200 {"status":"ok"}`. Demo readiness is `200 {"status":"ready","mod
 
 The proxy forwards only `POST /api/v1/scans` and `GET /api/v1/coverage`, unchanged, to the operator target. Coverage returns the bounded configured registry; scans return complete/partial results or the documented structured error envelope. Unknown proxy paths/methods, queries, non-JSON POST bodies, and requests over 1 KiB are rejected. Upstream requests have a 25-second total budget, disconnect cancellation, a 1 MiB response limit, no redirects/retries/caching, and a response-header allowlist for content type, request ID, and retry delay. Transport failures return a sanitized `503 SERVICE_NOT_READY`. The API applies shared domain schemas, caller quotas and scan admission controls described below.
 
-Next's startup config validates the runtime target before opening the port; instrumentation also initializes server-only configuration. There is no environment-specific build rewrite. The default target permits builds without environment secrets. Release packaging must preserve startup validation, especially if Stage 06 adopts standalone output.
+Next's startup config validates the runtime target before opening the development port; instrumentation also initializes server-only configuration. There is no environment-specific build rewrite. The default target permits builds without environment secrets. The production standalone wrapper performs the same validation before importing the generated server.
+
+Stage 06 now uses prepared standalone output: `pnpm build` packages the validator, its dependency and static assets, and `pnpm --filter @wps/web start` invokes the validated standalone entry point. Set `PORT` and `HOSTNAME` at runtime when overriding the default web listener. Host smoke/E2E and production images use the same entry point.
 
 ## Backend scan API and integration
 
@@ -168,9 +171,24 @@ curl -i http://localhost:3000/api/v1/coverage
 pnpm compose:down
 ```
 
-The root `.env` is for Compose interpolation; app `.env` files are for host execution. If default host ports are occupied, set `WEB_HOST_PORT`, `API_HOST_PORT`, and the corresponding `WEB_ORIGIN` in the root `.env`; internal service ports and `API_PROXY_TARGET=http://api:3001` stay fixed. Compose defaults to demo and starts only web/API. API readiness gates web startup; both services have bounded health checks. Ports bind to loopback, and the web service uses the internal API hostname. Images run as the non-root `node` user and exclude secrets. The frontend-required `docs/design/variables.css` is included in the build context; other owner exports remain excluded. Stage 05 rebuilt and inspected the local web target after correcting that exception. The shared Dockerfile is a local build/verification helper; production image optimization, CI, and hosting remain Stage 06.
+The root `.env` is for local Compose interpolation; app `.env` files are for host execution. If default host ports are occupied, set `WEB_HOST_PORT`, `API_HOST_PORT`, and the corresponding `WEB_ORIGIN` in the root `.env`; internal service ports and `API_PROXY_TARGET=http://api:3001` stay fixed. Compose defaults to demo and starts only web/API. API readiness gates web startup; both services have bounded health checks. Ports bind to loopback, and the web service uses the internal API hostname. Images run as the non-root `node` user and exclude secrets. The frontend-required `docs/design/variables.css` is included in the build context; other owner exports remain excluded. Stage 05 rebuilt and inspected the local web target after correcting that exception. The shared Dockerfile remains a local build helper; use the separate production Dockerfiles and Compose configuration below for release verification.
 
-Use the Docker context/socket for your running daemon. This environment required `DOCKER_HOST=unix:///var/run/docker.sock` because its selected Desktop socket was unavailable; normal setups should use their configured working context. No application source change is needed for that host setting.
+## Production artifacts and demo
+
+See [deployment operations](docs/DEPLOYMENT.md) for runtime injection, HTTPS ingress requirements, exact health commands, log retention, provider verification, rotation and rollback. To build and run the local production-equivalent demo:
+
+```sh
+cp infra/.env.example infra/.env
+docker compose --env-file infra/.env -f infra/compose.production.yaml config --quiet
+docker compose --env-file infra/.env -f infra/compose.production.yaml build
+docker compose --env-file infra/.env -f infra/compose.production.yaml up --no-build --wait --wait-timeout 120
+```
+
+Open `http://localhost:3000`. Production Compose requires explicit `SCAN_MODE` and `WEB_ORIGIN`, keeps API private, uses read-only/non-root containers, and retains one replica. Forwarded identities remain disabled: all visitors share the conservative API-peer quota. Demo address `0x3333333333333333333333333333333333333333` shows active/unlimited and inactive pairs; `0x6666666666666666666666666666666666666666` is all inactive; `0x7777777777777777777777777777777777777777` includes an unknown allowance and a partial result. Every demo result is synthetic, versioned separately from live, and has no explorer navigation.
+
+`pnpm test:containers` needs Docker/Compose, Python 3 and the pinned Chromium installation. It builds both images and checks exported runtime layers, environment errors, two runtime proxy targets, real browser scans, private API/non-root/read-only operation, health/provider outage, no-store/CSP, spoof-resistant shared rate limits, safe errors and SIGTERM. It creates and removes only its isolated test stack. No live RPC secret is needed. CI runs the same checks without publication permissions; remote workflow execution and public HTTPS verification remain outstanding.
+
+Use the Docker context/socket for your running daemon. Stage 06 checks in this environment used `DOCKER_CONTEXT=default` because its selected Desktop daemon was unavailable; normal setups should use their configured working context. No application source change is needed for that host setting.
 
 ## Structure and architecture
 
@@ -180,11 +198,13 @@ apps/api/                    Nest health/configuration, registry/readers, scan A
 packages/contracts/          Zod HTTP schemas, EIP-55 validation and synthetic fixtures; no server imports
 packages/typescript-config/  Strict base plus separate Node/Next module settings
 scripts/production-smoke.mjs Production-artifact verification
+scripts/container-smoke.mjs  Isolated production image/layer/browser verification
 tests/e2e/                   Deterministic Chromium interaction and accessibility checks
 tests/fixtures/              Synthetic API and fixed-reader scenarios
 tests/support/               Isolated test-only API/web launchers and IPC observation
 playwright.config.ts         Isolated production demo servers and browser configuration
 infra/compose.yaml           Local web/API services
+infra/compose.production.yaml Private API and hardened production containers
 infra/docker/                Local build helper
 docs/architecture/           Contracts, safety requirements, decisions
 docs/features/               Roadmap and detailed stage gates
@@ -205,7 +225,7 @@ The root [AGENTS.md](AGENTS.md) and [skills inventory](skills.md) carry project 
 | [03 — API and risk](docs/features/stages/03-backend-and-risk-analysis.md)    | Complete — verified 2026-11-19                            |
 | [04 — Frontend](docs/features/stages/04-frontend-integration.md)             | Complete — verified 2026-11-19                            |
 | [05 — Testing and security](docs/features/stages/05-testing-and-security.md) | Complete — verified 2026-11-19                            |
-| [06 — Release](docs/features/stages/06-deployment-and-release.md)            | Not started                                               |
+| [06 — Release](docs/features/stages/06-deployment-and-release.md)            | In progress — local artifacts; public release outstanding |
 
 Use the [roadmap](docs/features/ROADMAP.md) for acceptance gates. Historical Stage 01 verification covers configuration rejection/redaction, health and input limits in both modes with provider calls forbidden, proxy bounds/headers/cancellation, independent shared-package resolution, lint/type checks, production builds, runtime startup/proxy smoke, and local Compose readiness/routing. Stage 02 adds reader/transport tests; Stage 03 adds scan, risk, abuse controls and OpenAPI checks; Stage 04 adds frontend and browser coverage. Stage 05 adds the security review and clean-install evidence below.
 
@@ -217,4 +237,8 @@ Stage 03 verified on 2026-11-19: lint, formatting, strict type checking, **112 d
 
 Stage 04 verified on 2026-11-19: lint/format/type checks, **121 deterministic unit/HTTP tests (105 API / 16 web)**, both production builds, production smoke and **13 Chromium browser tests**. Axe found no violations in idle and expanded partial-result states. Layouts were checked at 320, 390 and 1440 px; desktop/mobile screenshots were visually inspected. See the [Stage 04 verification record](docs/features/stages/04-frontend-integration.md#verification-record--2026-11-19). Live RPC, Firefox/WebKit, human screen-reader testing and public deployment were not performed. The subsequent Stage 05 review is recorded below.
 
-Stage 05 verified on 2026-11-19: clean frozen dependency installation, lint/format/types, **126 unit/HTTP tests (110 API / 16 web)**, both production builds, **20 Chromium tests**, production smoke and byte-identical OpenAPI regeneration. Review fixed risk-payload consistency, added production CSP/security headers and restored required CSS to the local container build context. `pnpm audit --json` returned zero known advisories; no dependencies were upgraded. The existing local web image built and passed a network-disabled/non-root/file-exclusion inspection. See the [test inventory and release checks](docs/features/stages/05-testing-and-security.md#test-inventory-and-review-evidence--2026-11-19) and [security evidence/residual limits](docs/architecture/security.md#stage-05-review--2026-11-19). Live RPC, Firefox/WebKit, human screen-reader testing and public deployment remain unperformed. Stage 06 has not started.
+Stage 05 verified on 2026-11-19: clean frozen dependency installation, lint/format/types, **126 unit/HTTP tests (110 API / 16 web)**, both production builds, **20 Chromium tests**, production smoke and byte-identical OpenAPI regeneration. Review fixed risk-payload consistency, added production CSP/security headers and restored required CSS to the local container build context. `pnpm audit --json` returned zero known advisories; no dependencies were upgraded. The existing local web image built and passed a network-disabled/non-root/file-exclusion inspection. See the [test inventory and release checks](docs/features/stages/05-testing-and-security.md#test-inventory-and-review-evidence--2026-11-19) and [security evidence/residual limits](docs/architecture/security.md#stage-05-review--2026-11-19). Live RPC, Firefox/WebKit, human screen-reader testing and public deployment remain unperformed.
+
+Stage 06 local implementation and verification are recorded in its [verification record](docs/features/stages/06-deployment-and-release.md#verification-record--2026-11-19). No host/domain, public demo URL, image publication, release commit/tag or tested previous-release rollback exists yet.
+
+The [follow-up review](docs/features/stages/06-deployment-and-release.md#follow-up-review--2026-11-19) fixed startup failure cleanup, protected rollback environment backups from Git/build inclusion, verified smoke resource cleanup on success and failure, and added the missing Stage 05 advisory lookup to CI. Public deployment remains excluded from the authorized work.

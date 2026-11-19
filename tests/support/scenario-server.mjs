@@ -34,17 +34,10 @@ await new Promise((resolve) => reservation.close(resolve));
 const origin = `http://127.0.0.1:${port}`;
 const web = spawn(
   process.execPath,
-  [
-    'node_modules/next/dist/bin/next',
-    'start',
-    '--hostname',
-    '127.0.0.1',
-    '--port',
-    String(port),
-  ],
+  ['.next/standalone/apps/web/start-standalone.mjs'],
   {
     cwd: webDirectory,
-    env: process.env,
+    env: { ...process.env, PORT: String(port), HOSTNAME: '127.0.0.1' },
     stdio: ['ignore', 'inherit', 'inherit'],
   },
 );

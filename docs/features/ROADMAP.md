@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-Status: **Stages 01–05 complete** (2026-11-19). Foundation, internal blockchain integration, bounded public scan/risk API and the reference-guided frontend are implemented and deterministically verified. Optional live RPC/deployment smoke has not run without credentials. Stage 05 adds the cross-layer security review and clean-install verification; Stage 06 has not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
+Status: **Stages 01–05 complete; Stage 06 in progress** (2026-11-19). Foundation, internal blockchain integration, bounded public scan/risk API and the reference-guided frontend are implemented and deterministically verified. Stage 06 adds local production artifacts, hardened CI, fixed synthetic scenarios, bounded shutdown and an operator runbook. The owner selected artifacts/instructions only; public deployment remains outstanding. Optional live RPC smoke has not run without credentials.
 
 ## Overall progress
 
@@ -65,7 +65,7 @@ Dependency chain: **01 → 02 → 03 → 04 → 05 → 06**. The owner has suppl
 
 ## Stage 06 — Deployment and Release
 
-- **Progress:** [ ] Not started.
+- **Progress:** [ ] In progress — production images/configuration, CI, demo scenarios, shutdown and [deployment runbook](../DEPLOYMENT.md) implemented. Local verification is recorded in the [stage record](stages/06-deployment-and-release.md#verification-record--2026-11-19). Public hosting/HTTPS, remote CI, live RPC and a previous-release rollback rehearsal remain outstanding; no release tag was created.
 - **Objective:** Deliver a publicly demonstrable application with reproducible deployment and honest release documentation.
 - **Scope summary:** Production Docker builds/configuration, hardened CI, deployment/rollback runbook, labeled deterministic demo, environment/log documentation, production smoke checks, README and release updates.
 - **Main deliverables:** Safe production images, GitHub Actions, verified runtime routing/health, `docs/DEPLOYMENT.md` written against the selected host, public live or explicit demo deployment, actual release evidence.

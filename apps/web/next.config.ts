@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import path from 'node:path';
 import {
   PHASE_DEVELOPMENT_SERVER,
   PHASE_PRODUCTION_SERVER,
@@ -6,6 +7,8 @@ import {
 import { validateWebEnvironment } from './src/server/environment';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
+  outputFileTracingRoot: path.resolve(import.meta.dirname, '../..'),
   poweredByHeader: false,
   async headers() {
     return [

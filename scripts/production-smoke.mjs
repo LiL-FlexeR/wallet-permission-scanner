@@ -78,18 +78,13 @@ async function waitReady(process, url) {
 async function startWeb(target) {
   const port = await freePort();
   const process = start(
-    [
-      'node_modules/next/dist/bin/next',
-      'start',
-      '--hostname',
-      '127.0.0.1',
-      '--port',
-      port,
-    ],
+    ['.next/standalone/apps/web/start-standalone.mjs'],
     'apps/web',
     {
       NODE_ENV: 'production',
       API_PROXY_TARGET: target,
+      PORT: port,
+      HOSTNAME: '127.0.0.1',
     },
   );
   const origin = `http://127.0.0.1:${port}`;
@@ -139,6 +134,7 @@ try {
   assert.equal((await fetch(`${apiOrigin}/api/docs`)).status, 404);
   await stop(realWeb.process);
   await stop(api);
+  assert.equal(api.child.exitCode, 0);
 
   // The same production artifact must pick a new operator target after restart.
   for (const marker of ['first-runtime-target', 'second-runtime-target']) {
@@ -217,12 +213,42 @@ try {
   );
   assert.ok(!invalidApi.output().includes(secret));
 
+  // A failed live listen must dispose background readiness even with valid config.
+  // This preloader prevents all provider access in the isolated child process.
+  const occupied = new URL(await listen(createServer()));
+  const failedListen = start(
+    [
+      '--import',
+      'data:text/javascript,globalThis.fetch=async()=>{throw Error("network disabled")}',
+      'dist/main.js',
+    ],
+    'apps/api',
+    {
+      NODE_ENV: 'production',
+      SCAN_MODE: 'live',
+      ETHEREUM_RPC_URL: `https://rpc.invalid/${secret}`,
+      PORT: occupied.port,
+      LOG_LEVEL: 'error',
+    },
+  );
+  await Promise.race([
+    once(failedListen.child, 'close'),
+    delay(5000, undefined, { ref: false }).then(() => {
+      throw new Error('Failed API listen retained background work.');
+    }),
+  ]);
+  assert.equal(failedListen.child.exitCode, 1);
+  assert.match(failedListen.output(), /startup_failed/);
+  assert.ok(!failedListen.output().includes(secret));
+
   const invalidWeb = start(
-    ['node_modules/next/dist/bin/next', 'start', '--port', await freePort()],
+    ['.next/standalone/apps/web/start-standalone.mjs'],
     'apps/web',
     {
       NODE_ENV: 'production',
       API_PROXY_TARGET: `http://user:${secret}@localhost`,
+      PORT: await freePort(),
+      HOSTNAME: '127.0.0.1',
     },
   );
   await Promise.race([
@@ -261,8 +287,9 @@ try {
         );
     }
   }
+  await import('./shutdown-smoke.mjs');
   console.log(
-    'Production smoke passed: health, schema-valid demo scan/coverage through the real proxy, production docs disabled, runtime target changes, cancellation, startup redaction, browser artifact inspection.',
+    'Production smoke passed: health, schema-valid demo scan/coverage through the real proxy, production docs disabled, runtime target changes, cancellation, startup redaction/failed-listen cleanup, browser artifact inspection.',
   );
 } finally {
   for (const child of children)

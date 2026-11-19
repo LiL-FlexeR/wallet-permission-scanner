@@ -24,6 +24,7 @@ export async function createApp(
       bodyParser: false,
       logger: false,
       abortOnError: false,
+      forceCloseConnections: true,
     },
   );
   const config = app.get(ConfigService).getOrThrow<ApiEnvironment>('app');
@@ -128,6 +129,5 @@ export async function createApp(
   );
   app.useGlobalFilters(new SafeExceptionFilter());
   if (config.NODE_ENV !== 'production') installApiDocs(app);
-  app.enableShutdownHooks();
   return app;
 }

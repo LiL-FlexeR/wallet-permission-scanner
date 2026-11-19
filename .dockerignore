@@ -11,9 +11,26 @@
 **/*.log
 **/.env
 **/.env.*
+**/*.env
 **/*.pem
 **/*.key
+**/*.p12
+**/*.pfx
+**/.netrc
+**/id_rsa
+**/id_ed25519
+**/.aws
+**/.azure
+**/.config
 **/.npmrc
+**/test
+tests
+test-results
+playwright-report
+.playwright-cli
+scripts
+!scripts/prepare-standalone.mjs
+infra
 # The frontend imports this owner-supplied CSS; other documentation stays out.
 docs/**
 !docs/design
