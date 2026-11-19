@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:24.16.0-bookworm-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203 AS dependencies
+FROM node:26.13.1-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a53c0161664a011f7ff6b0f1 AS dependencies
 WORKDIR /build
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm install --global pnpm@12.21.0
@@ -17,7 +17,7 @@ COPY docs/design/variables.css docs/design/variables.css
 COPY scripts/prepare-standalone.mjs scripts/prepare-standalone.mjs
 RUN pnpm --filter @wps/contracts build && pnpm --filter @wps/web build
 
-FROM node:24.16.0-bookworm-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203 AS runtime
+FROM node:26.13.1-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a53c0161664a011f7ff6b0f1 AS runtime
 LABEL org.opencontainers.image.source="https://github.com/LiL-FlexeR/wallet-permission-scanner"
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
