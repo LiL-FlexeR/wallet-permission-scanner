@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-Status: **Stages 01–04 complete** (2026-11-19). Foundation, internal blockchain integration, bounded public scan/risk API and the reference-guided frontend are implemented and deterministically verified. Optional live RPC/deployment smoke has not run without credentials. Stages 05–06 have not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
+Status: **Stages 01–05 complete** (2026-11-19). Foundation, internal blockchain integration, bounded public scan/risk API and the reference-guided frontend are implemented and deterministically verified. Optional live RPC/deployment smoke has not run without credentials. Stage 05 adds the cross-layer security review and clean-install verification; Stage 06 has not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
 
 ## Overall progress
 
@@ -8,7 +8,7 @@ Status: **Stages 01–04 complete** (2026-11-19). Foundation, internal blockchai
 - [x] Stage 02 — Blockchain Integration
 - [x] Stage 03 — Backend API and Risk Analysis
 - [x] Stage 04 — Frontend Integration
-- [ ] Stage 05 — Testing and Security
+- [x] Stage 05 — Testing and Security
 - [ ] Stage 06 — Deployment and Release
 
 Dependency chain: **01 → 02 → 03 → 04 → 05 → 06**. The owner has supplied the visual reference pack in [docs/design](../design/DESIGN.md). Stage 04 must read the full pack using the root [AGENTS.md](../../AGENTS.md), reconcile relevant extraction conflicts, and obtain any missing surface-specific information before visual acceptance. Early domain/API testing continues within its owning stages; Stage 05 adds cross-layer verification.
@@ -45,7 +45,7 @@ Dependency chain: **01 → 02 → 03 → 04 → 05 → 06**. The owner has suppl
 
 ## Stage 04 — Frontend Integration
 
-- **Progress:** [x] Complete — 2026-11-19. Reference-guided interface, typed/schema-validated client, independent coverage, local request lifecycle/cancellation, exact values, signal/field explanations, stable conjunctive filters/sorts and fixed-origin links are implemented. Lint/format/type checks, 121 deterministic unit/HTTP tests (105 API / 16 web), production builds/smoke and 13 Chromium browser tests passed. Owner resolved the blue-action/type-scale extraction conflicts; four source exports are preserved. Axe, keyboard and 320/390/1440 px layouts were checked. See the [verification record](stages/04-frontend-integration.md#verification-record--2026-11-19). Live RPC and the broader Stage 05 review remain unperformed.
+- **Progress:** [x] Complete — 2026-11-19. Reference-guided interface, typed/schema-validated client, independent coverage, local request lifecycle/cancellation, exact values, signal/field explanations, stable conjunctive filters/sorts and fixed-origin links are implemented. Lint/format/type checks, 121 deterministic unit/HTTP tests (105 API / 16 web), production builds/smoke and 13 Chromium browser tests passed. Owner resolved the blue-action/type-scale extraction conflicts; four source exports are preserved. Axe, keyboard and 320/390/1440 px layouts were checked. See the [verification record](stages/04-frontend-integration.md#verification-record--2026-11-19). Live RPC remains unperformed; the subsequent broader review is recorded under Stage 05 below.
 - **Objective:** Let users submit addresses and interpret/filter/sort supported permission results using the API contract.
 - **Scope summary:** Validated input, scan requests, request state/cancellation, schema-checked responses, permission data and explanations, coverage/freshness/source information, safe explorer links, filtering/sorting, loading/empty/partial/error handling.
 - **Main deliverables:** Typed API client, local state and selectors, complete interaction path, risk explanations, deterministic functional tests, implementation based on supplied Refero references.
@@ -55,7 +55,7 @@ Dependency chain: **01 → 02 → 03 → 04 → 05 → 06**. The owner has suppl
 
 ## Stage 05 — Testing and Security
 
-- **Progress:** [ ] Not started.
+- **Progress:** [x] Complete — 2026-11-19. Test inventory/security review, strict policy-consistent schemas, production CSP/headers, additional RPC/HTTP invariants and real-reader browser scenarios are implemented. Clean frozen installation, lint/format/types, 126 unit/HTTP tests (110 API / 16 web), both builds, 20 Chromium tests, production smoke and identical OpenAPI regeneration passed. Dependency audit returned zero known advisories; the existing local web image/context fix was built and inspected. Live RPC remains unrun without credentials. See the [verification record](stages/05-testing-and-security.md#test-inventory-and-review-evidence--2026-11-19) and [security review](../architecture/security.md#stage-05-review--2026-11-19).
 - **Objective:** Verify cross-layer correctness and review security before release.
 - **Scope summary:** Unit/adapter/HTTP/E2E tests, contract mocks, provider and input failures, bigint precision, cancellation, rate/capacity/proxy handling, metadata security, privacy, secret inspection, dependency review, targeted fixes.
 - **Main deliverables:** Reproducible test matrix, deterministic browser paths through real proxy/API, meaningful invariant tests, security review evidence and residual limitations in existing docs.

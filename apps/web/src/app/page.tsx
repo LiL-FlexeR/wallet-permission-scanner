@@ -66,7 +66,7 @@ export default function HomePage() {
             </p>
             <div className="line-art" aria-hidden="true">
               {Array.from({ length: 28 }, (_, i) => (
-                <span key={i} style={{ height: `${20 + ((i * 13) % 53)}px` }} />
+                <span key={i} />
               ))}
             </div>
           </div>

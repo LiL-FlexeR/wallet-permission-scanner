@@ -53,3 +53,5 @@ export type Liveness = z.infer<typeof livenessSchema>;
 export type Readiness = z.infer<typeof readinessSchema>;
 export type ErrorEnvelope = z.infer<typeof errorEnvelopeSchema>;
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
+
+export { assessPermission, LARGE_ALLOWANCE_MULTIPLIER } from './risk.js';

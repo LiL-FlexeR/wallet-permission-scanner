@@ -202,7 +202,17 @@ h1 {
 }
 .line-art span {
   width: 2px;
+  height: 32px;
   background: var(--color-mist);
+}
+.line-art span:nth-child(4n + 1) {
+  height: 20px;
+}
+.line-art span:nth-child(4n + 2) {
+  height: 46px;
+}
+.line-art span:nth-child(4n + 3) {
+  height: 72px;
 }
 section {
   padding-block: 48px;

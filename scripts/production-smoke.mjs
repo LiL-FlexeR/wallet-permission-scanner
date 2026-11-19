@@ -252,6 +252,8 @@ try {
         'viem/',
         '@wps/api',
         'ViemEthereumReader',
+        'fixtureReader',
+        'scenario-server.mjs',
       ])
         assert.ok(
           !text.includes(forbidden),

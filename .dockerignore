@@ -14,7 +14,11 @@
 **/*.pem
 **/*.key
 **/.npmrc
-docs
+# The frontend imports this owner-supplied CSS; other documentation stays out.
+docs/**
+!docs/design
+docs/design/*
+!docs/design/variables.css
 *.md
 .idea
 .vscode

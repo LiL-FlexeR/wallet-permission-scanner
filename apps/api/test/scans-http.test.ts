@@ -641,3 +641,64 @@ test('shutdown stops admission and aborts admitted HTTP work before releasing it
     (e: unknown) => e instanceof Error && e.message === 'SERVICE_NOT_READY',
   );
 });
+
+test('inconsistent source, wallet, registry, tuples and token reads fail closed with a safe 500', async (t) => {
+  const clock = new FakeClock();
+  const app = await demoApp(t, clock);
+  const reader = app.get<EthereumReader>(ETHEREUM_READER);
+  const original = reader.read.bind(reader);
+  const client = request(app.getHttpServer());
+  const logs: string[] = [];
+  t.mock.method(console, 'error', (s: unknown) => logs.push(String(s)));
+  for (const mutate of [
+    (r: Awaited<ReturnType<EthereumReader['read']>>) => ({
+      ...r,
+      source: 'live' as const,
+    }),
+    (r: Awaited<ReturnType<EthereumReader['read']>>) => ({
+      ...r,
+      owner: `0x${'9'.repeat(40)}` as const,
+    }),
+    (r: Awaited<ReturnType<EthereumReader['read']>>) => ({
+      ...r,
+      registryVersion: 'wrong-1',
+    }),
+    (r: Awaited<ReturnType<EthereumReader['read']>>) => ({
+      ...r,
+      pairs: r.pairs.slice(1),
+    }),
+    (r: Awaited<ReturnType<EthereumReader['read']>>) => ({
+      ...r,
+      pairs: [r.pairs[0]!, r.pairs[0]!, r.pairs[2]!],
+    }),
+    (r: Awaited<ReturnType<EthereumReader['read']>>) => ({
+      ...r,
+      tokens: r.tokens.slice(1),
+    }),
+  ]) {
+    const mock = t.mock.method(reader, 'read', async (input: ReadInput) =>
+      mutate(await original(input)),
+    );
+    const response = await client
+      .post('/api/v1/scans')
+      .send({ address: owner })
+      .expect(500);
+    const body = errorEnvelopeSchema.parse(response.body);
+    assert.equal(body.error.code, 'INTERNAL_ERROR');
+    assert.equal(body.requestId, response.headers['x-request-id']);
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.equal(app.get(ScansService).inFlight, 0);
+    mock.mock.restore();
+  }
+  assert.ok(!JSON.stringify(logs).includes(owner));
+  await app.get(ScansService).onModuleDestroy();
+  for (const path of ['/api/v1/scans', '/api/v1/coverage']) {
+    const response = path.endsWith('scans')
+      ? await client.post(path).send({ address: owner }).expect(503)
+      : await client.get(path).expect(503);
+    assert.equal(
+      errorEnvelopeSchema.parse(response.body).error.code,
+      'SERVICE_NOT_READY',
+    );
+  }
+});

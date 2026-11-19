@@ -44,7 +44,9 @@ The stable record ID is `1:<lowercase-token-address>:<lowercase-spender-address>
 
 `activity` is `active` for a positive readable allowance, `inactive` for a zero readable allowance, and `unknown` for an unreadable allowance. `allowance: null` requires `activity: unknown` and an allowance warning. `balance: null` requires a balance warning. Missing name, symbol, or decimals requires the corresponding warning. A formatted amount can be null solely because decimals failed even when the raw value is known.
 
-All record and envelope fields, query behavior, counts, example JSON, and error enums are defined in the [API contract](api-design.md). `packages/contracts` supplies health/error/scan/coverage runtime schemas and shared EIP-55 validation. Stage 03 runtime refinements enforce transport bounds, exact amount scaling, tuple IDs/order, counts, nullable states, warning correspondence and complete/partial status; inferred types and synthetic HTTP fixtures are available to the frontend. Stage 02 domain types using `bigint` and discriminated field results remain internal to the backend.
+All record and envelope fields, query behavior, counts, example JSON, and error enums are defined in the [API contract](api-design.md). `packages/contracts` supplies health/error/scan/coverage runtime schemas and shared EIP-55 validation. Runtime refinements enforce transport bounds, exact amount scaling, tuple IDs/order, counts, nullable states, warning correspondence, complete/partial status and (from Stage 05) the full assessment against the pure versioned policy; inferred types and synthetic HTTP fixtures are available to the frontend. Stage 02 domain types using `bigint` and discriminated field results remain internal to the backend.
+
+The pure policy implementation is shared at `packages/contracts/src/risk.ts` so backend calculation and response validation use one rule source. The API owns classification during scans; the browser checks consistency and displays the returned assessment without independently changing results. Retrieval remains backend-only.
 
 ## Deterministic risk policy: `mvp-1`
 

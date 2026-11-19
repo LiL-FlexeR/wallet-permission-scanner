@@ -271,3 +271,67 @@ test('read-only RPC allowlist rejects unknown operations before network', async 
   );
   context.dispose();
 });
+
+test('RPC envelope/quantity corruption and deterministic errors never retry or retain provider text', async () => {
+  const cases: [unknown, string][] = [
+    [{ jsonrpc: '1.0', id: 1, result: '0x1' }, 'INVALID_RETURN_DATA'],
+    [{ jsonrpc: '2.0', id: '1', result: '0x1' }, 'INVALID_RETURN_DATA'],
+    [{ jsonrpc: '2.0', id: 1 }, 'INVALID_RETURN_DATA'],
+    [
+      { jsonrpc: '2.0', id: 1, result: '0x1', error: { code: 3 } },
+      'INVALID_RETURN_DATA',
+    ],
+    ...['0x01', '0x', '0x-1', '0x1.0', `0x${'f'.repeat(65)}`, 1, null].map(
+      (result) =>
+        [{ jsonrpc: '2.0', id: 1, result }, 'INVALID_RETURN_DATA'] as [
+          unknown,
+          string,
+        ],
+    ),
+    [
+      {
+        jsonrpc: '2.0',
+        id: 1,
+        error: { code: 3, message: 'https://rpc.invalid/secret' },
+      },
+      'CONTRACT_REVERT',
+    ],
+    [
+      {
+        jsonrpc: '2.0',
+        id: 1,
+        error: { code: -32000, message: 'execution reverted: secret' },
+      },
+      'CONTRACT_REVERT',
+    ],
+    [
+      { jsonrpc: '2.0', id: 1, error: { code: '3', message: 'secret' } },
+      'INVALID_RETURN_DATA',
+    ],
+    [
+      { jsonrpc: '2.0', id: 1, error: { code: -32602, message: 'secret' } },
+      'RPC_UNAVAILABLE',
+    ],
+  ];
+  for (const [payload, code] of cases) {
+    const clock = new FakeClock();
+    const context = new WorkBudget(15_000, clock);
+    let calls = 0;
+    const rpc = new BoundedRpc(
+      'https://rpc.invalid/secret',
+      undefined,
+      async () => {
+        calls++;
+        return Response.json(payload);
+      },
+    );
+    await assert.rejects(
+      rpc.request('eth_chainId', [], context, true),
+      fault(code),
+    );
+    assert.equal(calls, 1);
+    assert.equal(rpc.permits.inFlight, 0);
+    context.dispose();
+    assert.equal(clock.timerCount, 0);
+  }
+});

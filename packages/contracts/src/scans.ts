@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { normalizeAddress } from './address.js';
 
-export const RISK_POLICY_VERSION = 'mvp-1' as const;
-export const UINT256_MAX = (1n << 256n) - 1n;
+import { assessPermission, RISK_POLICY_VERSION, UINT256_MAX } from './risk.js';
+export { RISK_POLICY_VERSION, UINT256_MAX } from './risk.js';
 export const MAX_PAIRS = 20;
 export const warningFields = [
   'allowance',
@@ -225,31 +225,24 @@ export const permissionRecordSchema = z
       !exactAmount(v.balance, v.token.decimals)
     )
       return false;
-    if (v.allowance === null)
-      return (
-        v.activity === 'unknown' &&
-        v.risk.level === 'unknown' &&
-        v.risk.assessment === 'unavailable' &&
-        v.risk.signals.length === 1 &&
-        v.risk.signals[0]!.code === 'ALLOWANCE_UNAVAILABLE'
-      );
-    if (v.allowance.raw === '0')
-      return (
-        v.activity === 'inactive' &&
-        v.risk.level === 'none' &&
-        v.risk.assessment === 'complete' &&
-        v.risk.signals.length === 0
-      );
+    // Refinements may run after another scalar refinement failed. Guard bigint
+    // conversion so malformed transport data is rejected without throwing.
+    if (
+      (v.allowance &&
+        !uint256StringSchema.safeParse(v.allowance.raw).success) ||
+      (v.balance && !uint256StringSchema.safeParse(v.balance.raw).success)
+    )
+      return false;
+    const allowance = v.allowance === null ? null : BigInt(v.allowance.raw);
+    const balance = v.balance === null ? null : BigInt(v.balance.raw);
+    const expected = assessPermission(allowance, balance, v.spender.identity);
     return (
-      v.activity === 'active' &&
-      ['low', 'medium', 'high'].includes(v.risk.level) &&
-      v.risk.assessment === (v.balance === null ? 'limited' : 'complete') &&
-      v.risk.signals[0]?.code === 'ACTIVE_ALLOWANCE' &&
-      v.risk.signals.every(
-        (s) =>
-          !('allowanceRaw' in s.parameters) ||
-          s.parameters.allowanceRaw === v.allowance!.raw,
-      )
+      v.activity ===
+        (allowance === null
+          ? 'unknown'
+          : allowance === 0n
+            ? 'inactive'
+            : 'active') && JSON.stringify(v.risk) === JSON.stringify(expected)
     );
   }, 'Inconsistent permission identity, amounts, activity or assessment.');
 export const fieldWarningSchema = z.strictObject({

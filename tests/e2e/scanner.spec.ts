@@ -14,6 +14,66 @@ const addressInput = (page: Page) =>
   page.getByRole('textbox', { name: 'Ethereum wallet address' });
 const scanButton = (page: Page) =>
   page.getByRole('button', { name: 'Scan address' });
+
+test('production CSP uses fresh nonces, blocks injected scripts/connections and keeps the scanner functional', async ({
+  page,
+}) => {
+  const violations: string[] = [];
+  page.on('console', (message) => {
+    if (message.text().includes('Content Security Policy'))
+      violations.push(message.text());
+  });
+  const response = await page.goto('/');
+  const policy = response!.headers()['content-security-policy']!;
+  expect(policy).toContain("'strict-dynamic'");
+  expect(policy).not.toMatch(/unsafe-inline|unsafe-eval/);
+  expect(policy).toContain("style-src-attr 'none'");
+  expect(response!.headers()['referrer-policy']).toBe('no-referrer');
+  expect(response!.headers()['x-content-type-options']).toBe('nosniff');
+  expect(response!.headers()['x-frame-options']).toBe('DENY');
+  expect(response!.headers()['cache-control']).toContain('no-store');
+  const nonce = /'nonce-([^']+)'/.exec(policy)![1]!;
+  const scripts = await page
+    .locator('script')
+    .evaluateAll((nodes) => nodes.map((n) => (n as HTMLScriptElement).nonce));
+  expect(scripts.length).toBeGreaterThan(0);
+  expect(scripts.every((value) => value === nonce)).toBe(true);
+  await expect(
+    page.getByText('Synthetic demo coverage', { exact: false }),
+  ).toBeVisible();
+  expect(violations).toEqual([]);
+  const fresh = await page.request.get('/', {
+    headers: {
+      'Content-Security-Policy': "script-src 'unsafe-inline'",
+      'x-nonce': nonce,
+    },
+  });
+  expect(fresh.headers()['content-security-policy']).not.toBe(policy);
+  expect(fresh.headers()['content-security-policy']).not.toContain(
+    'unsafe-inline',
+  );
+  // Inject at the HTML boundary. DevTools evaluation is privileged and cannot
+  // model a parser-inserted attack under strict-dynamic.
+  await page.route('http://127.0.0.1:3100/', async (route) => {
+    const upstream = await route.fetch();
+    const body = (await upstream.text()).replace(
+      '</body>',
+      '<script>document.documentElement.dataset.injected="executed"</script></body>',
+    );
+    await route.fulfill({ response: upstream, body });
+  });
+  await page.goto('/');
+  const executed = await page.evaluate(async () => {
+    let blocked = false;
+    try {
+      await fetch('https://outside.invalid/credential');
+    } catch {
+      blocked = true;
+    }
+    return { injected: document.documentElement.dataset.injected, blocked };
+  });
+  expect(executed).toEqual({ injected: undefined, blocked: true });
+});
 async function fixture(page: Page, data: unknown = completeScanFixture) {
   await page.route('**/api/v1/coverage', (route) =>
     route.fulfill({ json: coverageFixture }),
@@ -108,7 +168,7 @@ test('inactive-only success retains inactive records and distinguishes filter em
   ).toBeVisible();
 });
 
-test('partial with zero readable allowances and unknown pair never becomes a clean claim; filters combine', async ({
+test('partial with a zero-valued readable allowance and unknown pair never becomes a clean claim; filters combine', async ({
   page,
 }) => {
   await fixture(page, unknownScanFixture);
