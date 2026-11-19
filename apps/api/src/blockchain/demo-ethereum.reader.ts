@@ -39,9 +39,16 @@ export type DemoScenario =
   | 'partial'
   | 'provider-failure';
 
+// Public, fixed synthetic examples. No runtime mutation or live-mode fallback.
+export const demoAddresses = Object.freeze({
+  success: `0x${'3'.repeat(40)}`,
+  zero: `0x${'6'.repeat(40)}`,
+  partial: `0x${'7'.repeat(40)}`,
+});
+
 /** Explicit synthetic reader used by demo-mode scans; never a live fallback. */
 export class DemoEthereumReader implements EthereumReader {
-  constructor(private readonly scenario: DemoScenario = 'success') {}
+  constructor(private readonly scenario?: DemoScenario) {}
   async probe(): Promise<void> {
     /* Demo readiness needs no RPC. */
   }
@@ -51,12 +58,19 @@ export class DemoEthereumReader implements EthereumReader {
     context,
   }: ReadInput): Promise<EthereumRead> {
     const owner = normalizeAddress(input);
+    const scenario =
+      this.scenario ??
+      (owner === demoAddresses.zero
+        ? 'zero'
+        : owner === demoAddresses.partial
+          ? 'partial'
+          : 'success');
     if (context.signal.aborted || context.remaining() <= 0)
       throw new ReaderFailure(
         context.remaining() <= 0 ? 'SCAN_TIMEOUT' : 'CANCELLED',
       );
     if (registry !== demoRegistry) throw new ReaderFailure('SERVICE_NOT_READY');
-    if (this.scenario === 'provider-failure')
+    if (scenario === 'provider-failure')
       throw new ReaderFailure('RPC_UNAVAILABLE');
     const tokens = [...new Set(registry.pairs.map((p) => p.token.address))].map(
       (address, index) =>
@@ -66,7 +80,7 @@ export class DemoEthereumReader implements EthereumReader {
           name: success(`Synthetic Token ${index + 1}`),
           symbol: success(`DEMO${index + 1}`),
           decimals:
-            this.scenario === 'metadata-failure'
+            scenario === 'metadata-failure'
               ? failure('CONTRACT_REVERT')
               : success(index === 0 ? 0 : 255),
         }),
@@ -77,10 +91,10 @@ export class DemoEthereumReader implements EthereumReader {
         tokenAddress: p.token.address,
         spenderAddress: p.spender.address,
         allowance:
-          this.scenario === 'partial' && index === 1
+          scenario === 'partial' && index === 1
             ? failure('RPC_UNAVAILABLE')
             : success(
-                this.scenario === 'zero'
+                scenario === 'zero'
                   ? 0n
                   : index === 0
                     ? MAX_UINT256

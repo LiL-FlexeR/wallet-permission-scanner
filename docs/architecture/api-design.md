@@ -270,6 +270,8 @@ Rate limiting occurs before expensive work, including for malformed scan attempt
 
 Use abort-aware upstream transport and bounded scheduling. Stop scheduling on deadline or disconnect, mark unresolved fields, and release permits only after in-flight work is aborted/settled. A browser cancellation may not reach every proxy immediately; the API deadline is the final bound. Graceful shutdown stops admission, aborts remaining work within the shutdown budget, and releases resources.
 
+Stage 06 implements API SIGTERM/SIGINT handling with synchronous admission/probe stop, immediate active-budget cancellation and settled cleanup before closing HTTP sockets. An eight-second watchdog exits unsuccessfully if cleanup cannot finish; production Compose grants ten seconds. Next has a thirty-second stop grace, with a twenty-five-second upstream proxy budget. See [deployment operations](../DEPLOYMENT.md#health-deadlines-and-shutdown). No business response schema changed.
+
 ## API documentation and integration
 
 Stage 03 generates and validates OpenAPI from shared schemas, with the success, partial, validation, provider, and rate-limit examples above. Provide `/api/openapi.json` and `/api/docs` in development/test only by default; their content is documentation, not additional business APIs. Production can publish a reviewed static schema artifact without exposing interactive tooling.

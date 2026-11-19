@@ -15,6 +15,7 @@
     "typecheck": "pnpm --filter @wps/contracts build && pnpm -r typecheck && tsc -p tests/tsconfig.json",
     "test": "pnpm --filter @wps/contracts build && pnpm -r --if-present test",
     "test:production": "node scripts/production-smoke.mjs",
+    "test:containers": "pnpm --filter @wps/contracts build && node scripts/container-smoke.mjs",
     "test:e2e": "pnpm build && playwright test",
     "docs:generate": "pnpm --filter @wps/contracts build && pnpm --filter @wps/api build && pnpm --filter @wps/api docs:generate",
     "test:blockchain:live": "pnpm --filter @wps/contracts build && pnpm --filter @wps/api build && pnpm --filter @wps/api test:blockchain:live",

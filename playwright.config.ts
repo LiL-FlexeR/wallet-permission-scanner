@@ -24,13 +24,14 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
-      command:
-        'pnpm --filter @wps/web exec next start --hostname 127.0.0.1 --port 3100',
+      command: 'pnpm --filter @wps/web start',
       url: 'http://127.0.0.1:3100',
       env: {
         NODE_ENV: 'production',
         API_PROXY_TARGET: 'http://127.0.0.1:3101',
         NEXT_TELEMETRY_DISABLED: '1',
+        PORT: '3100',
+        HOSTNAME: '127.0.0.1',
       },
       reuseExistingServer: false,
     },
