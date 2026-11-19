@@ -1,12 +1,12 @@
 # Implementation Roadmap
 
-Status: **Stages 01–02 complete** (2026-11-18). Foundation and internal blockchain integration are implemented and deterministically verified. Optional live RPC/deployment smoke has not run without credentials. Stages 03–06 have not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
+Status: **Stages 01–03 complete** (2026-11-19). Foundation, internal blockchain integration and the bounded public scan/risk API are implemented and deterministically verified. Optional live RPC/deployment smoke has not run without credentials. Stages 04–06 have not started. Execute later stages only when requested and review each stage's acceptance criteria before proceeding.
 
 ## Overall progress
 
 - [x] Stage 01 — Project Foundation
 - [x] Stage 02 — Blockchain Integration
-- [ ] Stage 03 — Backend API and Risk Analysis
+- [x] Stage 03 — Backend API and Risk Analysis
 - [ ] Stage 04 — Frontend Integration
 - [ ] Stage 05 — Testing and Security
 - [ ] Stage 06 — Deployment and Release
@@ -35,7 +35,7 @@ Dependency chain: **01 → 02 → 03 → 04 → 05 → 06**. The owner has suppl
 
 ## Stage 03 — Backend API and Risk Analysis
 
-- **Progress:** [ ] Not started.
+- **Progress:** [x] Complete — 2026-11-19. Shared runtime contracts, pure `mvp-1` rules, scan/coverage HTTP endpoints, partial/failure semantics, bounded per-route IP quotas, scan admission/cancellation and generated OpenAPI are implemented. Lint/format/type checks, 112 deterministic tests (105 API / 7 web), production builds and real proxy smoke passed. No cache or persistence was added; live RPC verification remains unrun without credentials. See the [stage verification record](stages/03-backend-and-risk-analysis.md#verification-record--2026-11-19).
 - **Objective:** Publish the stable scan contract and explainable `mvp-1` classifications.
 - **Scope summary:** Scan/coverage endpoints, shared runtime schemas, normalization, current-state interpretation, unlimited/relative-size rules, structured errors, request IDs, rate/capacity limits, no-store, OpenAPI. Baseline caching remains deferred.
 - **Main deliverables:** Typed REST endpoints, pure risk function and boundary fixtures, complete/partial/failure handling, safe logs, abuse controls, generated API documentation, frontend-ready fixtures.

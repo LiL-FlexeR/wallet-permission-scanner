@@ -29,16 +29,16 @@ Implement scan and coverage endpoints, strict input validation, result normaliza
 
 ## Implementation Tasks
 
-- [ ] Define request, coverage, amount, permission, risk-signal union, scan-success, warning, and error schemas in `packages/contracts` with bounded strings/arrays and null invariants.
-- [ ] Implement pure risk policy constants and assessment function, then table-driven boundary tests before controller integration.
-- [ ] Implement exact amount serialization and permission mapping, including safe explorer URLs, null metadata, field warnings, and stable tuple ordering.
-- [ ] Implement scan orchestration: capture immutable registry, admit within limits, preflight, invoke reader, classify, compute counts, and validate outgoing response.
-- [ ] Preserve deadline/abort propagation from HTTP lifecycle to reader. Verify all resources are released on success, exceptions, deadline, and disconnect.
-- [ ] Implement `POST /api/v1/scans` and `GET /api/v1/coverage` with strict validation and body/query/method handling.
-- [ ] Add or complete exception filtering for malformed JSON, invalid input, body/media limits, application capacity, wrong chain, snapshots, provider failure, and unexpected exceptions.
-- [ ] Add separate route counters, bounded expiring IP state, trusted-proxy identity configuration, request IDs, no-store headers, and safe logs.
-- [ ] Generate OpenAPI, document complete/partial/error examples, and expose development/test documentation endpoints. Validate schema generation against HTTP responses.
-- [ ] Run Nest HTTP and domain tests, exercise deterministic live-mode mocks and demo reader, and update API/README commands with real verification results.
+- [x] Define request, coverage, amount, permission, risk-signal union, scan-success, warning, and error schemas in `packages/contracts` with bounded strings/arrays and null invariants.
+- [x] Implement pure risk policy constants and assessment function, then table-driven boundary tests before controller integration.
+- [x] Implement exact amount serialization and permission mapping, including safe explorer URLs, null metadata, field warnings, and stable tuple ordering.
+- [x] Implement scan orchestration: capture immutable registry, admit within limits, preflight, invoke reader, classify, compute counts, and validate outgoing response.
+- [x] Preserve deadline/abort propagation from HTTP lifecycle to reader. Verify all resources are released on success, exceptions, deadline, and disconnect.
+- [x] Implement `POST /api/v1/scans` and `GET /api/v1/coverage` with strict validation and body/query/method handling.
+- [x] Add or complete exception filtering for malformed JSON, invalid input, body/media limits, application capacity, wrong chain, snapshots, provider failure, and unexpected exceptions.
+- [x] Add separate route counters, bounded expiring IP state, trusted-proxy identity configuration, request IDs, no-store headers, and safe logs.
+- [x] Generate OpenAPI, document complete/partial/error examples, and expose development/test documentation endpoints. Validate schema generation against HTTP responses.
+- [x] Run Nest HTTP and domain tests, exercise deterministic live-mode mocks and demo reader, and update API/README commands with real verification results.
 
 Implement schemas and risk tests before mapping; implement mapping before orchestration; apply abuse controls before exposing the scan route for browser integration.
 
@@ -114,3 +114,19 @@ All implementation tasks and acceptance criteria pass, public contracts are docu
 ## Out of Scope
 
 Frontend rendering or visual design, historical discovery, authentication, arbitrary token scanning, fiat pricing, reputation, completed-result caching, persistent history, queues, and transactions.
+
+
+## Verification record — 2026-11-19
+
+Stage 03 is implemented and verified. Stages 04–06 remain unstarted. Applied the installed `nestjs-best-practices` skill for feature modules, constructor injection, schema pipes, safe exception filtering and HTTP tests; project shared schemas and bounded in-memory controls take precedence over generic database/authentication/cache examples.
+
+- `packages/contracts` supplies strict request, amount, snapshot, identity, permission, ordered signal, warning, coverage, scan-success and error schemas with inferred types. Runtime refinements enforce exact formatting, EIP-55 output, tuple IDs/order, counts, null/warning correspondence and complete/partial status. Synthetic complete/partial/coverage HTTP fixtures are exported through `@wps/contracts/fixtures` without backend imports.
+- Pure `mvp-1` rules use raw bigint and the specified signal order. Boundary fixtures cover maximum versus finite near-maximum, ten-times equality/one-unit-below, values beyond safe integers, zero/unreadable balance, zero/unreadable allowance and verified/unverified identity. Metadata failures preserve raw-unit scoring.
+- Scan orchestration captures one immutable registry, retains all configured pairs, validates outgoing payloads and uses the existing bounded live/demo readers. No result cache, persistence, transactions, automatic demo fallback or additional services were added.
+- HTTP controls precede parsing/chain work: 10 scan and 60 coverage attempts/minute/IP; distinct fixed windows start on each route's first use. State is capped at 10,000 IPs, expires after two idle minutes via a single cleanup timer, and is cleared on shutdown. CIDR-based Express trust walks forwarded chains from the peer; malformed identities fall back to the peer. IPv6 representations and mapped IPv4 are normalized. Four admitted scans have no waiting queue; cancellation/deadline/exception/shutdown paths release resources after reader settlement.
+- Generated [OpenAPI 3.1](../../api/openapi.json) uses installed Zod `4.6.7` native `z.toJSONSchema`, targeting JSON Schema 2020-12; request conversion selects input semantics for address normalization. No manual DTO/schema conversion package was introduced. Runtime cross-field refinements remain authoritative where JSON Schema cannot encode them. Ajv validates generated schemas against representative fixtures and actual HTTP complete/partial/error/coverage responses, and tests reject a stale checked-in artifact. `pnpm docs:generate` reproduces the artifact.
+- Development/test `/api/openapi.json` and `/api/docs` use local Swagger UI assets, with remote validation disabled. Production omits all docs routes/assets. Swagger UI Express `5.0.1` / lockfile UI `5.35.0` and test-only Ajv `8.20.0`, ajv-formats `3.0.1` are recorded in the lockfile. Optional Scarf install-time analytics are disabled.
+- Passed `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm docs:generate`, `pnpm test` (**112 tests: 105 API / 7 web**), `pnpm build`, and `pnpm test:production`. HTTP tests include real loopback disconnects, deterministic live-mode RPC mocks, provider throttling versus caller limits, preflight failure, all allowances unreadable, total deadline with/without a known allowance, malformed/oversized/media/query/method input, safe errors/logs, capacity exhaustion, registry changes during a scan and shutdown.
+- Production smoke starts built API/Next processes and validates demo scan/coverage through the existing proxy, request IDs/no-store, production docs disabled, runtime target changes, disconnect propagation, startup redaction and browser artifacts. This verifies existing frontend proxy plumbing only; no Stage 04 UI work was done.
+
+The restricted execution sandbox cannot open loopback listeners and prevented Next's child TypeScript configuration probe. HTTP tests, production builds and smoke passed with the approved unrestricted command execution. No live RPC credential was supplied; optional `pnpm test:blockchain:live` was not run. Docker/Compose was not rerun for Stage 03 because no container configuration changed; Stage 01's container verification remains historical evidence, not a new Stage 03 result. No deployed URL or public release is claimed.

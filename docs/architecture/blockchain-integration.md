@@ -1,6 +1,6 @@
 # Blockchain Integration
 
-Stage 02 implements this internal capability with viem `2.58.0`, a public client, an abort-aware custom HTTP transport, and shared EIP-55 validation using browser-compatible `@noble/hashes` `2.4.0`. The initial `mainnet-1` registry and its primary sources are recorded in [registry provenance](registry-provenance.md). Deterministic tests exercise adapter behavior; no live provider/deployment check ran without credentials. Public scan orchestration and HTTP serialization remain Stage 03.
+Stage 02 implements this internal capability with viem `2.58.0`, a public client, an abort-aware custom HTTP transport, and shared EIP-55 validation using browser-compatible `@noble/hashes` `2.4.0`. The initial `mainnet-1` registry and its primary sources are recorded in [registry provenance](registry-provenance.md). Deterministic tests exercise adapter behavior; no live provider/deployment check ran without credentials. Stage 03 now exposes this reader through bounded scan orchestration and exact shared HTTP serialization; see the [stage verification record](../features/stages/03-backend-and-risk-analysis.md#verification-record--2026-11-19).
 
 ## Selected MVP strategy
 

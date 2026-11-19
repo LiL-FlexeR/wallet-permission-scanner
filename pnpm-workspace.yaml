@@ -8,3 +8,5 @@ saveExact: true
 # Required by tsx for deterministic web tests and the API development watcher.
 allowBuilds:
   esbuild: true
+  # Swagger UI's optional install-time analytics are unnecessary.
+  '@scarf/scarf': false

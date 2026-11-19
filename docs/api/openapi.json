@@ -1,0 +1,3233 @@
+{
+  "openapi": "3.1.0",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "Wallet Permission Scanner",
+    "version": "mvp-1",
+    "description": "Read-only Ethereum mainnet configured-pair scans. Labels describe permission exposure, not contract safety. No completed-result cache or persistent history. Cross-field counts, exact formatting, checksums, warning links and risk invariants are enforced by @wps/contracts in addition to JSON Schema."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ScanRequest": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string",
+            "maxLength": 128,
+            "pattern": "^\\s*0x[0-9a-fA-F]{40}\\s*$"
+          }
+        },
+        "required": [
+          "address"
+        ],
+        "additionalProperties": false
+      },
+      "ScanSuccess": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "live",
+              "demo"
+            ]
+          },
+          "chainId": {
+            "type": "number",
+            "const": 1
+          },
+          "registryVersion": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+          },
+          "riskPolicyVersion": {
+            "type": "string",
+            "const": "mvp-1"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "walletAddress": {
+            "type": "string",
+            "minLength": 42,
+            "maxLength": 42,
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "partial"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "snapshot": {
+            "type": "object",
+            "properties": {
+              "blockNumber": {
+                "type": "string",
+                "maxLength": 78,
+                "pattern": "^(0|[1-9][0-9]*)$"
+              },
+              "blockHash": {
+                "type": "string",
+                "minLength": 66,
+                "maxLength": 66,
+                "pattern": "^0x[0-9a-fA-F]{64}$"
+              },
+              "blockTimestamp": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "finality": {
+                "type": "string",
+                "const": "finalized"
+              }
+            },
+            "required": [
+              "blockNumber",
+              "blockHash",
+              "blockTimestamp",
+              "finality"
+            ],
+            "additionalProperties": false
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "strategy": {
+                "type": "string",
+                "const": "configured-pairs"
+              },
+              "limitation": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000
+              },
+              "configuredPairs": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20
+              },
+              "checkedPairs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 20
+              },
+              "failedPairs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 20
+              }
+            },
+            "required": [
+              "strategy",
+              "limitation",
+              "configuredPairs",
+              "checkedPairs",
+              "failedPairs"
+            ],
+            "additionalProperties": false
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "active": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 20
+              },
+              "inactive": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 20
+              },
+              "unknown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 20
+              }
+            },
+            "required": [
+              "active",
+              "inactive",
+              "unknown"
+            ],
+            "additionalProperties": false
+          },
+          "permissions": {
+            "minItems": 1,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 87,
+                  "maxLength": 87,
+                  "pattern": "^1:0x[0-9a-f]{40}:0x[0-9a-f]{40}$"
+                },
+                "token": {
+                  "type": "object",
+                  "properties": {
+                    "address": {
+                      "type": "string",
+                      "minLength": 42,
+                      "maxLength": 42,
+                      "pattern": "^0x[0-9a-fA-F]{40}$"
+                    },
+                    "name": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 240
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "symbol": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "decimals": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "explorerUrl": {
+                      "type": "string",
+                      "maxLength": 80,
+                      "pattern": "^https:\\/\\/etherscan\\.io\\/token\\/0x[0-9a-fA-F]{40}$"
+                    }
+                  },
+                  "required": [
+                    "address",
+                    "name",
+                    "symbol",
+                    "decimals",
+                    "explorerUrl"
+                  ],
+                  "additionalProperties": false
+                },
+                "spender": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "address": {
+                          "type": "string",
+                          "minLength": 42,
+                          "maxLength": 42,
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "identity": {
+                          "type": "string",
+                          "const": "verified"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 240
+                        },
+                        "identitySourceUrl": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri"
+                        },
+                        "identityReviewedAt": {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        "explorerUrl": {
+                          "type": "string",
+                          "maxLength": 80,
+                          "pattern": "^https:\\/\\/etherscan\\.io\\/address\\/0x[0-9a-fA-F]{40}$"
+                        }
+                      },
+                      "required": [
+                        "address",
+                        "identity",
+                        "label",
+                        "identitySourceUrl",
+                        "identityReviewedAt",
+                        "explorerUrl"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "address": {
+                          "type": "string",
+                          "minLength": 42,
+                          "maxLength": 42,
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "identity": {
+                          "type": "string",
+                          "const": "unverified"
+                        },
+                        "label": {
+                          "type": "null"
+                        },
+                        "identitySourceUrl": {
+                          "type": "null"
+                        },
+                        "identityReviewedAt": {
+                          "type": "null"
+                        },
+                        "explorerUrl": {
+                          "type": "string",
+                          "maxLength": 80,
+                          "pattern": "^https:\\/\\/etherscan\\.io\\/address\\/0x[0-9a-fA-F]{40}$"
+                        }
+                      },
+                      "required": [
+                        "address",
+                        "identity",
+                        "label",
+                        "identitySourceUrl",
+                        "identityReviewedAt",
+                        "explorerUrl"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "allowance": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "raw": {
+                          "type": "string",
+                          "maxLength": 78,
+                          "pattern": "^(0|[1-9][0-9]*)$"
+                        },
+                        "formatted": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 334,
+                              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]*[1-9])?$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "raw",
+                        "formatted"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "balance": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "raw": {
+                          "type": "string",
+                          "maxLength": 78,
+                          "pattern": "^(0|[1-9][0-9]*)$"
+                        },
+                        "formatted": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 334,
+                              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]*[1-9])?$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "raw",
+                        "formatted"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "activity": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "inactive",
+                    "unknown"
+                  ]
+                },
+                "risk": {
+                  "type": "object",
+                  "properties": {
+                    "level": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "low",
+                        "medium",
+                        "high",
+                        "unknown"
+                      ]
+                    },
+                    "assessment": {
+                      "type": "string",
+                      "enum": [
+                        "complete",
+                        "limited",
+                        "unavailable"
+                      ]
+                    },
+                    "signals": {
+                      "maxItems": 5,
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "const": "ALLOWANCE_UNAVAILABLE"
+                              },
+                              "severity": {
+                                "type": "string",
+                                "const": "info"
+                              },
+                              "parameters": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "severity",
+                              "parameters"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "const": "ACTIVE_ALLOWANCE"
+                              },
+                              "severity": {
+                                "type": "string",
+                                "const": "low"
+                              },
+                              "parameters": {
+                                "type": "object",
+                                "properties": {
+                                  "allowanceRaw": {
+                                    "type": "string",
+                                    "maxLength": 78,
+                                    "pattern": "^(0|[1-9][0-9]*)$"
+                                  }
+                                },
+                                "required": [
+                                  "allowanceRaw"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "severity",
+                              "parameters"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "const": "UNLIMITED_ALLOWANCE"
+                              },
+                              "severity": {
+                                "type": "string",
+                                "const": "high"
+                              },
+                              "parameters": {
+                                "type": "object",
+                                "properties": {
+                                  "allowanceRaw": {
+                                    "type": "string",
+                                    "maxLength": 78,
+                                    "pattern": "^(0|[1-9][0-9]*)$"
+                                  }
+                                },
+                                "required": [
+                                  "allowanceRaw"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "severity",
+                              "parameters"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "const": "LARGE_RELATIVE_TO_BALANCE"
+                              },
+                              "severity": {
+                                "type": "string",
+                                "const": "medium"
+                              },
+                              "parameters": {
+                                "type": "object",
+                                "properties": {
+                                  "allowanceRaw": {
+                                    "type": "string",
+                                    "maxLength": 78,
+                                    "pattern": "^(0|[1-9][0-9]*)$"
+                                  },
+                                  "balanceRaw": {
+                                    "type": "string",
+                                    "maxLength": 78,
+                                    "pattern": "^(0|[1-9][0-9]*)$"
+                                  },
+                                  "multiplier": {
+                                    "type": "number",
+                                    "const": 10
+                                  }
+                                },
+                                "required": [
+                                  "allowanceRaw",
+                                  "balanceRaw",
+                                  "multiplier"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "severity",
+                              "parameters"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "const": "ZERO_BALANCE_WITH_ALLOWANCE"
+                              },
+                              "severity": {
+                                "type": "string",
+                                "const": "medium"
+                              },
+                              "parameters": {
+                                "type": "object",
+                                "properties": {
+                                  "allowanceRaw": {
+                                    "type": "string",
+                                    "maxLength": 78,
+                                    "pattern": "^(0|[1-9][0-9]*)$"
+                                  },
+                                  "balanceRaw": {
+                                    "type": "string",
+                                    "const": "0"
+                                  }
+                                },
+                                "required": [
+                                  "allowanceRaw",
+                                  "balanceRaw"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "severity",
+                              "parameters"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "const": "UNVERIFIED_SPENDER"
+                              },
+                              "severity": {
+                                "type": "string",
+                                "const": "info"
+                              },
+                              "parameters": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "severity",
+                              "parameters"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "code": {
+                                "type": "string",
+                                "const": "BALANCE_UNAVAILABLE"
+                              },
+                              "severity": {
+                                "type": "string",
+                                "const": "info"
+                              },
+                              "parameters": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "severity",
+                              "parameters"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "level",
+                    "assessment",
+                    "signals"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "token",
+                "spender",
+                "allowance",
+                "balance",
+                "activity",
+                "risk"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "warnings": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "pairId": {
+                  "type": "string",
+                  "minLength": 87,
+                  "maxLength": 87,
+                  "pattern": "^1:0x[0-9a-f]{40}:0x[0-9a-f]{40}$"
+                },
+                "field": {
+                  "type": "string",
+                  "enum": [
+                    "allowance",
+                    "balance",
+                    "name",
+                    "symbol",
+                    "decimals"
+                  ]
+                },
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "CONTRACT_REVERT",
+                    "RPC_TIMEOUT",
+                    "PROVIDER_RATE_LIMITED",
+                    "RPC_UNAVAILABLE",
+                    "INVALID_RETURN_DATA",
+                    "DEADLINE_EXCEEDED"
+                  ]
+                }
+              },
+              "required": [
+                "pairId",
+                "field",
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "source",
+          "chainId",
+          "registryVersion",
+          "riskPolicyVersion",
+          "requestId",
+          "walletAddress",
+          "status",
+          "startedAt",
+          "completedAt",
+          "snapshot",
+          "coverage",
+          "summary",
+          "permissions",
+          "warnings"
+        ],
+        "additionalProperties": false
+      },
+      "Coverage": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "live",
+              "demo"
+            ]
+          },
+          "chainId": {
+            "type": "number",
+            "const": 1
+          },
+          "registryVersion": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+          },
+          "riskPolicyVersion": {
+            "type": "string",
+            "const": "mvp-1"
+          },
+          "strategy": {
+            "type": "string",
+            "const": "configured-pairs"
+          },
+          "limitation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "configuredPairs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "pairs": {
+            "minItems": 1,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 87,
+                  "maxLength": 87,
+                  "pattern": "^1:0x[0-9a-f]{40}:0x[0-9a-f]{40}$"
+                },
+                "tokenAddress": {
+                  "type": "string",
+                  "minLength": 42,
+                  "maxLength": 42,
+                  "pattern": "^0x[0-9a-fA-F]{40}$"
+                },
+                "spender": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "address": {
+                          "type": "string",
+                          "minLength": 42,
+                          "maxLength": 42,
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "identity": {
+                          "type": "string",
+                          "const": "verified"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 240
+                        },
+                        "identitySourceUrl": {
+                          "type": "string",
+                          "maxLength": 2048,
+                          "format": "uri"
+                        },
+                        "identityReviewedAt": {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        "explorerUrl": {
+                          "type": "string",
+                          "maxLength": 80,
+                          "pattern": "^https:\\/\\/etherscan\\.io\\/address\\/0x[0-9a-fA-F]{40}$"
+                        }
+                      },
+                      "required": [
+                        "address",
+                        "identity",
+                        "label",
+                        "identitySourceUrl",
+                        "identityReviewedAt",
+                        "explorerUrl"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "address": {
+                          "type": "string",
+                          "minLength": 42,
+                          "maxLength": 42,
+                          "pattern": "^0x[0-9a-fA-F]{40}$"
+                        },
+                        "identity": {
+                          "type": "string",
+                          "const": "unverified"
+                        },
+                        "label": {
+                          "type": "null"
+                        },
+                        "identitySourceUrl": {
+                          "type": "null"
+                        },
+                        "identityReviewedAt": {
+                          "type": "null"
+                        },
+                        "explorerUrl": {
+                          "type": "string",
+                          "maxLength": 80,
+                          "pattern": "^https:\\/\\/etherscan\\.io\\/address\\/0x[0-9a-fA-F]{40}$"
+                        }
+                      },
+                      "required": [
+                        "address",
+                        "identity",
+                        "label",
+                        "identitySourceUrl",
+                        "identityReviewedAt",
+                        "explorerUrl"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "tokenAddress",
+                "spender"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "source",
+          "chainId",
+          "registryVersion",
+          "riskPolicyVersion",
+          "strategy",
+          "limitation",
+          "configuredPairs",
+          "pairs"
+        ],
+        "additionalProperties": false
+      },
+      "PermissionRecord": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 87,
+            "maxLength": 87,
+            "pattern": "^1:0x[0-9a-f]{40}:0x[0-9a-f]{40}$"
+          },
+          "token": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "minLength": 42,
+                "maxLength": 42,
+                "pattern": "^0x[0-9a-fA-F]{40}$"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 240
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "symbol": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "decimals": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "explorerUrl": {
+                "type": "string",
+                "maxLength": 80,
+                "pattern": "^https:\\/\\/etherscan\\.io\\/token\\/0x[0-9a-fA-F]{40}$"
+              }
+            },
+            "required": [
+              "address",
+              "name",
+              "symbol",
+              "decimals",
+              "explorerUrl"
+            ],
+            "additionalProperties": false
+          },
+          "spender": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "address": {
+                    "type": "string",
+                    "minLength": 42,
+                    "maxLength": 42,
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "identity": {
+                    "type": "string",
+                    "const": "verified"
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 240
+                  },
+                  "identitySourceUrl": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "format": "uri"
+                  },
+                  "identityReviewedAt": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  "explorerUrl": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "pattern": "^https:\\/\\/etherscan\\.io\\/address\\/0x[0-9a-fA-F]{40}$"
+                  }
+                },
+                "required": [
+                  "address",
+                  "identity",
+                  "label",
+                  "identitySourceUrl",
+                  "identityReviewedAt",
+                  "explorerUrl"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "address": {
+                    "type": "string",
+                    "minLength": 42,
+                    "maxLength": 42,
+                    "pattern": "^0x[0-9a-fA-F]{40}$"
+                  },
+                  "identity": {
+                    "type": "string",
+                    "const": "unverified"
+                  },
+                  "label": {
+                    "type": "null"
+                  },
+                  "identitySourceUrl": {
+                    "type": "null"
+                  },
+                  "identityReviewedAt": {
+                    "type": "null"
+                  },
+                  "explorerUrl": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "pattern": "^https:\\/\\/etherscan\\.io\\/address\\/0x[0-9a-fA-F]{40}$"
+                  }
+                },
+                "required": [
+                  "address",
+                  "identity",
+                  "label",
+                  "identitySourceUrl",
+                  "identityReviewedAt",
+                  "explorerUrl"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "allowance": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "raw": {
+                    "type": "string",
+                    "maxLength": 78,
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  },
+                  "formatted": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 334,
+                        "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]*[1-9])?$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "raw",
+                  "formatted"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "balance": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "raw": {
+                    "type": "string",
+                    "maxLength": 78,
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  },
+                  "formatted": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 334,
+                        "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]*[1-9])?$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "raw",
+                  "formatted"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "activity": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "unknown"
+            ]
+          },
+          "risk": {
+            "type": "object",
+            "properties": {
+              "level": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "low",
+                  "medium",
+                  "high",
+                  "unknown"
+                ]
+              },
+              "assessment": {
+                "type": "string",
+                "enum": [
+                  "complete",
+                  "limited",
+                  "unavailable"
+                ]
+              },
+              "signals": {
+                "maxItems": 5,
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "const": "ALLOWANCE_UNAVAILABLE"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "const": "info"
+                        },
+                        "parameters": {
+                          "type": "object",
+                          "properties": {},
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "parameters"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "const": "ACTIVE_ALLOWANCE"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "const": "low"
+                        },
+                        "parameters": {
+                          "type": "object",
+                          "properties": {
+                            "allowanceRaw": {
+                              "type": "string",
+                              "maxLength": 78,
+                              "pattern": "^(0|[1-9][0-9]*)$"
+                            }
+                          },
+                          "required": [
+                            "allowanceRaw"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "parameters"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "const": "UNLIMITED_ALLOWANCE"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "const": "high"
+                        },
+                        "parameters": {
+                          "type": "object",
+                          "properties": {
+                            "allowanceRaw": {
+                              "type": "string",
+                              "maxLength": 78,
+                              "pattern": "^(0|[1-9][0-9]*)$"
+                            }
+                          },
+                          "required": [
+                            "allowanceRaw"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "parameters"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "const": "LARGE_RELATIVE_TO_BALANCE"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "const": "medium"
+                        },
+                        "parameters": {
+                          "type": "object",
+                          "properties": {
+                            "allowanceRaw": {
+                              "type": "string",
+                              "maxLength": 78,
+                              "pattern": "^(0|[1-9][0-9]*)$"
+                            },
+                            "balanceRaw": {
+                              "type": "string",
+                              "maxLength": 78,
+                              "pattern": "^(0|[1-9][0-9]*)$"
+                            },
+                            "multiplier": {
+                              "type": "number",
+                              "const": 10
+                            }
+                          },
+                          "required": [
+                            "allowanceRaw",
+                            "balanceRaw",
+                            "multiplier"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "parameters"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "const": "ZERO_BALANCE_WITH_ALLOWANCE"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "const": "medium"
+                        },
+                        "parameters": {
+                          "type": "object",
+                          "properties": {
+                            "allowanceRaw": {
+                              "type": "string",
+                              "maxLength": 78,
+                              "pattern": "^(0|[1-9][0-9]*)$"
+                            },
+                            "balanceRaw": {
+                              "type": "string",
+                              "const": "0"
+                            }
+                          },
+                          "required": [
+                            "allowanceRaw",
+                            "balanceRaw"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "parameters"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "const": "UNVERIFIED_SPENDER"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "const": "info"
+                        },
+                        "parameters": {
+                          "type": "object",
+                          "properties": {},
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "parameters"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "const": "BALANCE_UNAVAILABLE"
+                        },
+                        "severity": {
+                          "type": "string",
+                          "const": "info"
+                        },
+                        "parameters": {
+                          "type": "object",
+                          "properties": {},
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "severity",
+                        "parameters"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            },
+            "required": [
+              "level",
+              "assessment",
+              "signals"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "token",
+          "spender",
+          "allowance",
+          "balance",
+          "activity",
+          "risk"
+        ],
+        "additionalProperties": false
+      },
+      "Amount": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "raw": {
+            "type": "string",
+            "maxLength": 78,
+            "pattern": "^(0|[1-9][0-9]*)$"
+          },
+          "formatted": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 334,
+                "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]*[1-9])?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "raw",
+          "formatted"
+        ],
+        "additionalProperties": false
+      },
+      "RiskSignal": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "const": "ALLOWANCE_UNAVAILABLE"
+              },
+              "severity": {
+                "type": "string",
+                "const": "info"
+              },
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "code",
+              "severity",
+              "parameters"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "const": "ACTIVE_ALLOWANCE"
+              },
+              "severity": {
+                "type": "string",
+                "const": "low"
+              },
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "allowanceRaw": {
+                    "type": "string",
+                    "maxLength": 78,
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  }
+                },
+                "required": [
+                  "allowanceRaw"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "code",
+              "severity",
+              "parameters"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "const": "UNLIMITED_ALLOWANCE"
+              },
+              "severity": {
+                "type": "string",
+                "const": "high"
+              },
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "allowanceRaw": {
+                    "type": "string",
+                    "maxLength": 78,
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  }
+                },
+                "required": [
+                  "allowanceRaw"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "code",
+              "severity",
+              "parameters"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "const": "LARGE_RELATIVE_TO_BALANCE"
+              },
+              "severity": {
+                "type": "string",
+                "const": "medium"
+              },
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "allowanceRaw": {
+                    "type": "string",
+                    "maxLength": 78,
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  },
+                  "balanceRaw": {
+                    "type": "string",
+                    "maxLength": 78,
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  },
+                  "multiplier": {
+                    "type": "number",
+                    "const": 10
+                  }
+                },
+                "required": [
+                  "allowanceRaw",
+                  "balanceRaw",
+                  "multiplier"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "code",
+              "severity",
+              "parameters"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "const": "ZERO_BALANCE_WITH_ALLOWANCE"
+              },
+              "severity": {
+                "type": "string",
+                "const": "medium"
+              },
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "allowanceRaw": {
+                    "type": "string",
+                    "maxLength": 78,
+                    "pattern": "^(0|[1-9][0-9]*)$"
+                  },
+                  "balanceRaw": {
+                    "type": "string",
+                    "const": "0"
+                  }
+                },
+                "required": [
+                  "allowanceRaw",
+                  "balanceRaw"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "code",
+              "severity",
+              "parameters"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "const": "UNVERIFIED_SPENDER"
+              },
+              "severity": {
+                "type": "string",
+                "const": "info"
+              },
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "code",
+              "severity",
+              "parameters"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "const": "BALANCE_UNAVAILABLE"
+              },
+              "severity": {
+                "type": "string",
+                "const": "info"
+              },
+              "parameters": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "code",
+              "severity",
+              "parameters"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "FieldWarning": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "pairId": {
+            "type": "string",
+            "minLength": 87,
+            "maxLength": 87,
+            "pattern": "^1:0x[0-9a-f]{40}:0x[0-9a-f]{40}$"
+          },
+          "field": {
+            "type": "string",
+            "enum": [
+              "allowance",
+              "balance",
+              "name",
+              "symbol",
+              "decimals"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "CONTRACT_REVERT",
+              "RPC_TIMEOUT",
+              "PROVIDER_RATE_LIMITED",
+              "RPC_UNAVAILABLE",
+              "INVALID_RETURN_DATA",
+              "DEADLINE_EXCEEDED"
+            ]
+          }
+        },
+        "required": [
+          "pairId",
+          "field",
+          "code"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "INVALID_REQUEST",
+                  "INVALID_ADDRESS",
+                  "NOT_FOUND",
+                  "METHOD_NOT_ALLOWED",
+                  "PAYLOAD_TOO_LARGE",
+                  "UNSUPPORTED_MEDIA_TYPE",
+                  "INTERNAL_ERROR",
+                  "SERVICE_NOT_READY",
+                  "RATE_LIMITED",
+                  "SCAN_CAPACITY_EXCEEDED",
+                  "CHAIN_MISMATCH",
+                  "SNAPSHOT_UNAVAILABLE",
+                  "RPC_UNAVAILABLE",
+                  "SCAN_TIMEOUT"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "retryable": {
+                "type": "boolean"
+              },
+              "details": {
+                "maxItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "const": "address"
+                    },
+                    "issue": {
+                      "type": "string",
+                      "const": "invalid_format_or_checksum"
+                    }
+                  },
+                  "required": [
+                    "field",
+                    "issue"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestId",
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "Liveness": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "Readiness": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "not_ready"
+            ]
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "live",
+              "demo"
+            ]
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "configuration": {
+                "type": "string",
+                "const": "ok"
+              },
+              "blockchain": {
+                "type": "string",
+                "enum": [
+                  "not_required",
+                  "ok",
+                  "unavailable"
+                ]
+              }
+            },
+            "required": [
+              "configuration",
+              "blockchain"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status",
+          "mode",
+          "checks"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/scans": {
+      "post": {
+        "operationId": "scan",
+        "summary": "Inspect configured permissions at one finalized snapshot",
+        "description": "No query parameters. Only address is accepted, trimmed and checksum-validated; zero is rejected. Maximum JSON body: 1024 bytes. 10 requests/minute/client IP, including malformed attempts. Four concurrent scans/process, no queue; 15-second admission deadline. source=demo is synthetic and never a fallback. At least one readable allowance is required for success. Missing fields remain null with ordered warnings. Exact uint256 and formatted strings use no floating point.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanRequest"
+              },
+              "example": {
+                "address": "0x3333333333333333333333333333333333333333"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Complete or partial configured-pair scan.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanSuccess"
+                },
+                "examples": {
+                  "complete": {
+                    "value": {
+                      "source": "demo",
+                      "chainId": 1,
+                      "registryVersion": "demo-1",
+                      "riskPolicyVersion": "mvp-1",
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "walletAddress": "0x3333333333333333333333333333333333333333",
+                      "status": "complete",
+                      "startedAt": "2026-11-18T12:00:00.000Z",
+                      "completedAt": "2026-11-18T12:00:00.050Z",
+                      "snapshot": {
+                        "blockNumber": "24000000",
+                        "blockHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        "blockTimestamp": "2026-11-18T11:48:00.000Z",
+                        "finality": "finalized"
+                      },
+                      "coverage": {
+                        "strategy": "configured-pairs",
+                        "limitation": "Only configured token/spender pairs are checked; other permissions may exist.",
+                        "configuredPairs": 1,
+                        "checkedPairs": 1,
+                        "failedPairs": 0
+                      },
+                      "summary": {
+                        "active": 1,
+                        "inactive": 0,
+                        "unknown": 0
+                      },
+                      "permissions": [
+                        {
+                          "id": "1:0x1111111111111111111111111111111111111111:0x2222222222222222222222222222222222222222",
+                          "token": {
+                            "address": "0x1111111111111111111111111111111111111111",
+                            "name": "Synthetic Demo Token",
+                            "symbol": "DEMO",
+                            "decimals": 6,
+                            "explorerUrl": "https://etherscan.io/token/0x1111111111111111111111111111111111111111"
+                          },
+                          "spender": {
+                            "address": "0x2222222222222222222222222222222222222222",
+                            "identity": "unverified",
+                            "label": null,
+                            "identitySourceUrl": null,
+                            "identityReviewedAt": null,
+                            "explorerUrl": "https://etherscan.io/address/0x2222222222222222222222222222222222222222"
+                          },
+                          "allowance": {
+                            "raw": "200000000",
+                            "formatted": "200"
+                          },
+                          "balance": {
+                            "raw": "10000000",
+                            "formatted": "10"
+                          },
+                          "activity": "active",
+                          "risk": {
+                            "level": "medium",
+                            "assessment": "complete",
+                            "signals": [
+                              {
+                                "code": "ACTIVE_ALLOWANCE",
+                                "severity": "low",
+                                "parameters": {
+                                  "allowanceRaw": "200000000"
+                                }
+                              },
+                              {
+                                "code": "LARGE_RELATIVE_TO_BALANCE",
+                                "severity": "medium",
+                                "parameters": {
+                                  "allowanceRaw": "200000000",
+                                  "balanceRaw": "10000000",
+                                  "multiplier": 10
+                                }
+                              },
+                              {
+                                "code": "UNVERIFIED_SPENDER",
+                                "severity": "info",
+                                "parameters": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "warnings": []
+                    }
+                  },
+                  "partial": {
+                    "value": {
+                      "source": "demo",
+                      "chainId": 1,
+                      "registryVersion": "demo-1",
+                      "riskPolicyVersion": "mvp-1",
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "walletAddress": "0x3333333333333333333333333333333333333333",
+                      "status": "partial",
+                      "startedAt": "2026-11-18T12:00:00.000Z",
+                      "completedAt": "2026-11-18T12:00:00.050Z",
+                      "snapshot": {
+                        "blockNumber": "24000000",
+                        "blockHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        "blockTimestamp": "2026-11-18T11:48:00.000Z",
+                        "finality": "finalized"
+                      },
+                      "coverage": {
+                        "strategy": "configured-pairs",
+                        "limitation": "Only configured token/spender pairs are checked; other permissions may exist.",
+                        "configuredPairs": 1,
+                        "checkedPairs": 1,
+                        "failedPairs": 0
+                      },
+                      "summary": {
+                        "active": 1,
+                        "inactive": 0,
+                        "unknown": 0
+                      },
+                      "permissions": [
+                        {
+                          "id": "1:0x1111111111111111111111111111111111111111:0x2222222222222222222222222222222222222222",
+                          "token": {
+                            "address": "0x1111111111111111111111111111111111111111",
+                            "name": "Synthetic Demo Token",
+                            "symbol": "DEMO",
+                            "decimals": 6,
+                            "explorerUrl": "https://etherscan.io/token/0x1111111111111111111111111111111111111111"
+                          },
+                          "spender": {
+                            "address": "0x2222222222222222222222222222222222222222",
+                            "identity": "unverified",
+                            "label": null,
+                            "identitySourceUrl": null,
+                            "identityReviewedAt": null,
+                            "explorerUrl": "https://etherscan.io/address/0x2222222222222222222222222222222222222222"
+                          },
+                          "allowance": {
+                            "raw": "200000000",
+                            "formatted": "200"
+                          },
+                          "balance": null,
+                          "activity": "active",
+                          "risk": {
+                            "level": "low",
+                            "assessment": "limited",
+                            "signals": [
+                              {
+                                "code": "ACTIVE_ALLOWANCE",
+                                "severity": "low",
+                                "parameters": {
+                                  "allowanceRaw": "200000000"
+                                }
+                              },
+                              {
+                                "code": "UNVERIFIED_SPENDER",
+                                "severity": "info",
+                                "parameters": {}
+                              },
+                              {
+                                "code": "BALANCE_UNAVAILABLE",
+                                "severity": "info",
+                                "parameters": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "warnings": [
+                        {
+                          "pairId": "1:0x1111111111111111111111111111111111111111:0x2222222222222222222222222222222222222222",
+                          "field": "balance",
+                          "code": "RPC_TIMEOUT"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST, INVALID_ADDRESS",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INVALID_REQUEST": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": "Invalid request.",
+                        "retryable": false
+                      }
+                    }
+                  },
+                  "INVALID_ADDRESS": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "INVALID_ADDRESS",
+                        "message": "Provide a valid nonzero Ethereum address.",
+                        "retryable": false,
+                        "details": [
+                          {
+                            "field": "address",
+                            "issue": "invalid_format_or_checksum"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "METHOD_NOT_ALLOWED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "METHOD_NOT_ALLOWED": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "METHOD_NOT_ALLOWED",
+                        "message": "Method not allowed.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "PAYLOAD_TOO_LARGE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "PAYLOAD_TOO_LARGE",
+                        "message": "Request body exceeds 1024 bytes.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "UNSUPPORTED_MEDIA_TYPE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "UNSUPPORTED_MEDIA_TYPE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "UNSUPPORTED_MEDIA_TYPE",
+                        "message": "Unsupported media type.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Retry-After": {
+                "description": "Integer seconds; caller quota reset for 429, 1 for busy capacity.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "RATE_LIMITED": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "Request quota exceeded. Try again later.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INTERNAL_ERROR": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": "Internal server error.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SCAN_CAPACITY_EXCEEDED, CHAIN_MISMATCH, SNAPSHOT_UNAVAILABLE, RPC_UNAVAILABLE, SERVICE_NOT_READY",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Retry-After": {
+                "description": "Integer seconds; caller quota reset for 429, 1 for busy capacity.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "SCAN_CAPACITY_EXCEEDED": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "SCAN_CAPACITY_EXCEEDED",
+                        "message": "Scan capacity is busy. Try again later.",
+                        "retryable": true
+                      }
+                    }
+                  },
+                  "CHAIN_MISMATCH": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "CHAIN_MISMATCH",
+                        "message": "The configured provider is not on Ethereum mainnet.",
+                        "retryable": false
+                      }
+                    }
+                  },
+                  "SNAPSHOT_UNAVAILABLE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "SNAPSHOT_UNAVAILABLE",
+                        "message": "A recent finalized snapshot is unavailable.",
+                        "retryable": true
+                      }
+                    }
+                  },
+                  "RPC_UNAVAILABLE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "RPC_UNAVAILABLE",
+                        "message": "Blockchain reads are unavailable. Try again later.",
+                        "retryable": true
+                      }
+                    }
+                  },
+                  "SERVICE_NOT_READY": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "SERVICE_NOT_READY",
+                        "message": "Service is not ready. Try again later.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "SCAN_TIMEOUT",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "SCAN_TIMEOUT": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "SCAN_TIMEOUT",
+                        "message": "The scan deadline expired without a readable allowance.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/coverage": {
+      "get": {
+        "operationId": "coverage",
+        "summary": "Publish the configured pair set without RPC reads",
+        "description": "No query or body. 60 requests/minute/client IP. Embedded scan registryVersion remains authoritative after a registry change.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Bounded explicit pair registry.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coverage"
+                },
+                "example": {
+                  "source": "demo",
+                  "chainId": 1,
+                  "registryVersion": "demo-1",
+                  "riskPolicyVersion": "mvp-1",
+                  "strategy": "configured-pairs",
+                  "limitation": "Only configured token/spender pairs are checked; other permissions may exist.",
+                  "configuredPairs": 1,
+                  "pairs": [
+                    {
+                      "id": "1:0x1111111111111111111111111111111111111111:0x2222222222222222222222222222222222222222",
+                      "tokenAddress": "0x1111111111111111111111111111111111111111",
+                      "spender": {
+                        "address": "0x2222222222222222222222222222222222222222",
+                        "identity": "unverified",
+                        "label": null,
+                        "identitySourceUrl": null,
+                        "identityReviewedAt": null,
+                        "explorerUrl": "https://etherscan.io/address/0x2222222222222222222222222222222222222222"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INVALID_REQUEST": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": "Invalid request.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "METHOD_NOT_ALLOWED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "METHOD_NOT_ALLOWED": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "METHOD_NOT_ALLOWED",
+                        "message": "Method not allowed.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "PAYLOAD_TOO_LARGE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "PAYLOAD_TOO_LARGE",
+                        "message": "Request body exceeds 1024 bytes.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "UNSUPPORTED_MEDIA_TYPE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "UNSUPPORTED_MEDIA_TYPE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "UNSUPPORTED_MEDIA_TYPE",
+                        "message": "Unsupported media type.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Retry-After": {
+                "description": "Integer seconds; caller quota reset for 429, 1 for busy capacity.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "RATE_LIMITED": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "RATE_LIMITED",
+                        "message": "Request quota exceeded. Try again later.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INTERNAL_ERROR": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": "Internal server error.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SCAN_CAPACITY_EXCEEDED, SERVICE_NOT_READY",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Retry-After": {
+                "description": "Integer seconds; caller quota reset for 429, 1 for busy capacity.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "SCAN_CAPACITY_EXCEEDED": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "SCAN_CAPACITY_EXCEEDED",
+                        "message": "Scan capacity is busy. Try again later.",
+                        "retryable": true
+                      }
+                    }
+                  },
+                  "SERVICE_NOT_READY": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "SERVICE_NOT_READY",
+                        "message": "Service is not ready. Try again later.",
+                        "retryable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "liveness",
+        "responses": {
+          "200": {
+            "description": "Process responds.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Liveness"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INVALID_REQUEST": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": "Invalid request.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "METHOD_NOT_ALLOWED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "METHOD_NOT_ALLOWED": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "METHOD_NOT_ALLOWED",
+                        "message": "Method not allowed.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "PAYLOAD_TOO_LARGE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "PAYLOAD_TOO_LARGE",
+                        "message": "Request body exceeds 1024 bytes.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "UNSUPPORTED_MEDIA_TYPE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "UNSUPPORTED_MEDIA_TYPE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "UNSUPPORTED_MEDIA_TYPE",
+                        "message": "Unsupported media type.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INTERNAL_ERROR": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": "Internal server error.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "readiness",
+        "responses": {
+          "200": {
+            "description": "Ready.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Readiness"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INVALID_REQUEST": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": "Invalid request.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "METHOD_NOT_ALLOWED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "METHOD_NOT_ALLOWED": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "METHOD_NOT_ALLOWED",
+                        "message": "Method not allowed.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "PAYLOAD_TOO_LARGE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "PAYLOAD_TOO_LARGE",
+                        "message": "Request body exceeds 1024 bytes.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "UNSUPPORTED_MEDIA_TYPE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "UNSUPPORTED_MEDIA_TYPE": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "UNSUPPORTED_MEDIA_TYPE",
+                        "message": "Unsupported media type.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "INTERNAL_ERROR": {
+                    "value": {
+                      "requestId": "6e61365b-d1c1-4fb7-9680-9bfbe99d120e",
+                      "error": {
+                        "code": "INTERNAL_ERROR",
+                        "message": "Internal server error.",
+                        "retryable": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Not ready; cached status, no request-time RPC.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Server generated UUID.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "Responses are never cached.",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Readiness"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

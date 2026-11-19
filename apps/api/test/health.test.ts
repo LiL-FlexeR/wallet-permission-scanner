@@ -76,8 +76,8 @@ for (const mode of ['live', 'demo']) {
       await client.head(path).expect(405);
       await client.get(`${path.toUpperCase()}/?unknown=1`).expect(400);
     }
-    await client.get('/api/v1/coverage').expect(404);
-    await client.post('/api/v1/scans').send({ address: 'unused' }).expect(404);
+    await client.get('/api/v1/coverage').expect(200);
+    await client.post('/api/v1/scans').send({ address: 'unused' }).expect(400);
     const allowed = await client
       .get('/health/live')
       .set('Origin', 'http://localhost:3000')

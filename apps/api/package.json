@@ -9,7 +9,8 @@
     "start": "node --env-file-if-exists=.env dist/main.js",
     "typecheck": "tsc -p tsconfig.test.json --noEmit",
     "test": "tsc -p tsconfig.test.json && node --test dist-test/test/*.test.js",
-    "test:blockchain:live": "node --env-file-if-exists=.env dist/blockchain/live-smoke.js"
+    "test:blockchain:live": "node --env-file-if-exists=.env dist/blockchain/live-smoke.js",
+    "docs:generate": "node dist/docs/write-openapi.js"
   },
   "dependencies": {
     "@nestjs/common": "12.5.1",
@@ -20,13 +21,17 @@
     "express": "5.3.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
+    "swagger-ui-express": "5.0.1",
     "viem": "2.58.0",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/express": "5.0.6",
     "@types/supertest": "7.2.1",
+    "@types/swagger-ui-express": "4.1.8",
     "@wps/typescript-config": "workspace:*",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
     "supertest": "7.3.2",
     "tsx": "4.23.15"
   }

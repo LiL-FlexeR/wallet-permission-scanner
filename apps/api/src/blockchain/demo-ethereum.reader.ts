@@ -39,7 +39,7 @@ export type DemoScenario =
   | 'partial'
   | 'provider-failure';
 
-/** Internal Stage 02 fixtures, not a live fallback or a public demo scan endpoint. */
+/** Explicit synthetic reader used by demo-mode scans; never a live fallback. */
 export class DemoEthereumReader implements EthereumReader {
   constructor(private readonly scenario: DemoScenario = 'success') {}
   async probe(): Promise<void> {

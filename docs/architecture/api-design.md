@@ -2,7 +2,7 @@
 
 ## Contract conventions
 
-Planned base path: `/api/v1`. JSON uses camelCase and UTF-8. Schemas in `packages/contracts` are the implementation source of truth; this document fixes intended behavior. API evolution must update schemas, tests, OpenAPI, these docs, and affected stage specifications together.
+Base path: `/api/v1`. JSON uses camelCase and UTF-8. Schemas in `packages/contracts` are the implementation source of truth; this document fixes intended behavior. API evolution must update schemas, tests, OpenAPI, these docs, and affected stage specifications together.
 
 - `Content-Type: application/json` for scan requests; maximum body size 1 KiB. Reject unknown body properties and all undocumented query parameters.
 - Canonical EIP-55 addresses in responses; input normalization follows [blockchain integration](blockchain-integration.md).
@@ -275,3 +275,14 @@ Use abort-aware upstream transport and bounded scheduling. Stop scheduling on de
 Stage 03 generates and validates OpenAPI from shared schemas, with the success, partial, validation, provider, and rate-limit examples above. Provide `/api/openapi.json` and `/api/docs` in development/test only by default; their content is documentation, not additional business APIs. Production can publish a reviewed static schema artifact without exposing interactive tooling.
 
 The web application uses same-origin `/api/v1/*`, validates response payloads at runtime, and treats unknown schema versions or malformed responses as integration errors. A frontend layout is not part of this contract. See [Stage 03](../features/stages/03-backend-and-risk-analysis.md) and [Stage 04](../features/stages/04-frontend-integration.md).
+
+
+## Stage 03 implementation and verification
+
+Implemented and verified on 2026-11-19; see the [stage record](../features/stages/03-backend-and-risk-analysis.md#verification-record--2026-11-19). `packages/contracts` is the runtime source for both HTTP schemas and inferred types. `@wps/contracts/fixtures` publishes synthetic complete, partial and coverage examples independent of NestJS/viem. The [generated OpenAPI 3.1 artifact](../api/openapi.json) is reproduced by `pnpm docs:generate` and checked against generation in tests.
+
+Conversion uses Zod `4.6.7` native [`z.toJSONSchema`](https://zod.dev/json-schema), JSON Schema 2020-12, with `io: input` for the normalizing request. Wire bounds/unions are generated; EIP-55 checks, exact formatted/raw correspondence, count equations, ordering and null/warning relationships additionally require the shared runtime refinements. Consumers must use the runtime schemas to enforce the full contract. No parallel DTO definitions are maintained. Ajv `8.20.0` validates representative examples and actual complete/partial/error/coverage responses against the generated schemas in tests.
+
+The limiter uses independent fixed windows beginning on the first attempt for each route/IP. All known-route attempts, including malformed bodies, wrong methods/media and oversized payloads, count before body parsing. IP entries are bounded to 10,000 and removed after two idle minutes even without further requests; a single timer performs expiry and is disposed on shutdown. Busy capacity returns `Retry-After: 1`; a quota rejection returns ceiling seconds to the route's window reset. Express trusts only configured proxy CIDRs, walks from the actual peer to the first untrusted address, normalizes valid IP representations and falls back to the peer if the selected forwarded identity is invalid. Forwarded identities remain disabled by default, including behind the existing web proxy.
+
+Documentation routes are available directly on the API in development/test. Swagger UI Express `5.0.1` serves lockfile-pinned UI `5.35.0` locally with its remote validator disabled; production has no interactive or JSON documentation endpoints. No completed-result cache or persistent state beyond operational limits was added. Scan risk thresholds and public response semantics above are unchanged.

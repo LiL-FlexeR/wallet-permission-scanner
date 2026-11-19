@@ -1,7 +1,7 @@
 .agents/
 .codex/
 # Existing specifications and owner references keep their supplied formatting.
-docs/
+/docs/
 AGENTS.md
 skills.md
 node_modules/

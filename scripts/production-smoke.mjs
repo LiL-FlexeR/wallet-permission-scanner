@@ -6,6 +6,10 @@ import { createServer, request as httpRequest } from 'node:http';
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import {
+  coverageResponseSchema,
+  scanSuccessSchema,
+} from '../packages/contracts/dist/index.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const children = new Set();
@@ -113,10 +117,26 @@ try {
     checks: { configuration: 'ok', blockchain: 'not_required' },
   });
   const realWeb = await startWeb(apiOrigin);
-  const missing = await fetch(`${realWeb.origin}/api/v1/coverage`);
-  assert.equal(missing.status, 404);
-  assert.equal((await missing.json()).error.code, 'NOT_FOUND');
-  assert.equal(missing.headers.get('cache-control'), 'no-store');
+  const coverage = await fetch(`${realWeb.origin}/api/v1/coverage`);
+  assert.equal(coverage.status, 200);
+  assert.equal(
+    coverageResponseSchema.parse(await coverage.json()).source,
+    'demo',
+  );
+  assert.equal(coverage.headers.get('cache-control'), 'no-store');
+  const scanned = await fetch(`${realWeb.origin}/api/v1/scans`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      address: '0x3333333333333333333333333333333333333333',
+    }),
+  });
+  assert.equal(scanned.status, 200);
+  const scan = scanSuccessSchema.parse(await scanned.json());
+  assert.equal(scan.source, 'demo');
+  assert.equal(scan.requestId, scanned.headers.get('x-request-id'));
+  assert.equal(scanned.headers.get('cache-control'), 'no-store');
+  assert.equal((await fetch(`${apiOrigin}/api/docs`)).status, 404);
   await stop(realWeb.process);
   await stop(api);
 
@@ -232,7 +252,7 @@ try {
     }
   }
   console.log(
-    'Production smoke passed: health, real API 404 routing, runtime target changes, cancellation, startup redaction, browser artifact inspection.',
+    'Production smoke passed: health, schema-valid demo scan/coverage through the real proxy, production docs disabled, runtime target changes, cancellation, startup redaction, browser artifact inspection.',
   );
 } finally {
   for (const child of children)
